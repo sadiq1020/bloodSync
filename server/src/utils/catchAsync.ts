@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 
-// Wraps async route handlers and forwards errors to the next middleware
+// Wraps async controller methods and forwards any errors to next()
 export const catchAsync = (
   fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
 ): RequestHandler => {

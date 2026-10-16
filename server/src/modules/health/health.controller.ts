@@ -5,7 +5,7 @@ import * as healthService from "./health.service.js";
 export const checkHealth = (_req: Request, res: Response): void => {
   const healthData = healthService.getHealthStatus();
   res.status(200).json({
-    status: "success",
+    success: true,
     data: healthData,
   });
 };

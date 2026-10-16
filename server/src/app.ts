@@ -4,7 +4,7 @@ import helmet from "helmet";
 import pino from "pino";
 import { pinoHttp } from "pino-http";
 import { env } from "./config/env.js";
-import { apiRateLimiter } from "./middlewares/rateLimiter.js";
+import { generalLimiter } from "./middlewares/rateLimiter.js";
 import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { healthRouter } from "./modules/health/health.route.js";
@@ -23,7 +23,7 @@ app.use(
 );
 
 // Global rate limiting
-app.use(apiRateLimiter);
+app.use(generalLimiter);
 
 // Body parsing middlewares
 app.use(express.json());
