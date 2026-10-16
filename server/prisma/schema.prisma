@@ -1,0 +1,99 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum BloodGroup {
+  A_POSITIVE  @map("A+")
+  A_NEGATIVE  @map("A-")
+  B_POSITIVE  @map("B+")
+  B_NEGATIVE  @map("B-")
+  AB_POSITIVE @map("AB+")
+  AB_NEGATIVE @map("AB-")
+  O_POSITIVE  @map("O+")
+  O_NEGATIVE  @map("O-")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Urgency {
+  NORMAL
+  URGENT
+  CRITICAL
+}
+
+enum RequestStatus {
+  OPEN
+  MATCHED
+  FULFILLED
+  EXPIRED
+  CANCELLED
+}
+
+enum DonationStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+}
+
+model DonorProfile {
+  id            String      @id @default(cuid())
+  userId        String      @unique
+  bloodGroup    BloodGroup
+  district      String
+  area          String
+  phone         String
+  isAvailable   Boolean     @default(true)
+  lastDonatedAt DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([district])
+  @@index([bloodGroup])
+}
+
+model BloodRequest {
+  id           String        @id @default(cuid())
+  requesterId  String
+  patientName  String
+  bloodGroup   BloodGroup
+  unitsNeeded  Int           @default(1)
+  hospital     String
+  district     String
+  area         String
+  urgency      Urgency
+  neededBy     DateTime
+  contactPhone String
+  note         String?
+  forSelf      Boolean
+  status       RequestStatus @default(OPEN)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  donations    Donation[]
+
+  @@index([district])
+  @@index([bloodGroup])
+  @@index([status])
+}
+
+model Donation {
+  id        String         @id @default(cuid())
+  requestId String
+  donorId   String
+  status    DonationStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  request BloodRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, donorId])
+  @@index([status])
+}
