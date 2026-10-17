@@ -7,9 +7,21 @@ const bloodGroupSchema = z.enum(BLOOD_GROUPS, {
   message: "Must be one of: A+, A-, B+, B-, AB+, AB-, O+, O-",
 });
 
+// Query-string safe version: '+' is decoded as ' ' in URLs, so restore it
+const bloodGroupQuerySchema = z
+  .string()
+  .transform((val) => val.replace(/ /g, "+"))
+  .pipe(bloodGroupSchema);
+
 const districtSchema = z.enum(BANGLADESH_DISTRICTS, {
   message: "Must be a valid Bangladesh district",
 });
+
+// Query-string safe version: normalize 'dhaka' -> 'Dhaka' etc.
+const districtQuerySchema = z
+  .string()
+  .transform((val) => val.charAt(0).toUpperCase() + val.slice(1))
+  .pipe(districtSchema);
 
 const areaSchema = z
   .string()
@@ -57,8 +69,8 @@ export const updateDonorSchema = z
 
 // GET /api/donors/search query params
 export const searchDonorSchema = z.object({
-  bloodGroup: bloodGroupSchema.optional(),
-  district: districtSchema.optional(),
+  bloodGroup: bloodGroupQuerySchema.optional(),
+  district: districtQuerySchema.optional(),
   area: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10),

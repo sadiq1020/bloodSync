@@ -17,7 +17,13 @@ export const validate = (schema: RequestValidationSchema | ZodSchema) => {
           req.body = await compositeSchema.body.parseAsync(req.body);
         }
         if (compositeSchema.query) {
-          req.query = (await compositeSchema.query.parseAsync(req.query)) as any;
+          // Express 5: req.query is a read-only getter; use defineProperty to override it
+          const parsed = await compositeSchema.query.parseAsync(req.query);
+          Object.defineProperty(req, "query", {
+            value: parsed,
+            writable: true,
+            configurable: true,
+          });
         }
         if (compositeSchema.params) {
           req.params = (await compositeSchema.params.parseAsync(req.params)) as any;
