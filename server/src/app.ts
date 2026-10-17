@@ -11,6 +11,7 @@ import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { healthRouter } from "./modules/health/health.route.js";
 import { userRouter } from "./modules/user/user.route.js";
+import { donorRouter } from "./modules/donor/donor.route.js";
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use(pinoHttp({ logger }));
 // API routes
 app.use("/api", healthRouter);
 app.use("/api", userRouter);
+app.use("/api", donorRouter);
 
 // 404 handler for undefined routes
 app.use(notFound);

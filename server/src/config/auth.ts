@@ -10,7 +10,7 @@ export const auth = betterAuth({
   }),
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
-  trustedOrigins: [env.FRONTEND_URL],
+  trustedOrigins: [env.FRONTEND_URL, env.BETTER_AUTH_URL, "http://localhost:3000", "http://localhost:5000"],
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 8,
