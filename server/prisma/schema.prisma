@@ -43,6 +43,70 @@ enum DonationStatus {
   CANCELLED
 }
 
+model User {
+  id            String         @id
+  name          String
+  email         String         @unique
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  role          Role           @default(USER)
+  isBlocked     Boolean        @default(false)
+
+  sessions      Session[]
+  accounts      Account[]
+  donorProfile  DonorProfile?
+  bloodRequests BloodRequest[]
+  donations     Donation[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verification")
+}
+
 model DonorProfile {
   id            String      @id @default(cuid())
   userId        String      @unique
@@ -54,6 +118,8 @@ model DonorProfile {
   lastDonatedAt DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([district])
   @@index([bloodGroup])
@@ -77,6 +143,7 @@ model BloodRequest {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
+  requester    User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
   donations    Donation[]
 
   @@index([district])
@@ -92,7 +159,8 @@ model Donation {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
-  request BloodRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request   BloodRequest   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  donor     User           @relation(fields: [donorId], references: [id], onDelete: Cascade)
 
   @@unique([requestId, donorId])
   @@index([status])

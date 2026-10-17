@@ -3,11 +3,14 @@ import cors from "cors";
 import helmet from "helmet";
 import pino from "pino";
 import { pinoHttp } from "pino-http";
+import { toNodeHandler } from "better-auth/node";
 import { env } from "./config/env.js";
+import { auth } from "./config/auth.js";
 import { generalLimiter } from "./middlewares/rateLimiter.js";
 import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { healthRouter } from "./modules/health/health.route.js";
+import { userRouter } from "./modules/user/user.route.js";
 
 const app = express();
 
@@ -24,6 +27,9 @@ app.use(
 
 // Global rate limiting
 app.use(generalLimiter);
+
+// Mount Better Auth handler BEFORE body parsing (Express 5 wildcard syntax)
+app.all("/api/auth/*splat", toNodeHandler(auth));
 
 // Body parsing middlewares
 app.use(express.json());
@@ -45,6 +51,7 @@ app.use(pinoHttp({ logger }));
 
 // API routes
 app.use("/api", healthRouter);
+app.use("/api", userRouter);
 
 // 404 handler for undefined routes
 app.use(notFound);
