@@ -75,3 +75,16 @@ export const cancelRequest = catchAsync(async (req: Request, res: Response) => {
     data: cancelled,
   });
 });
+
+// GET /api/requests/:id/donors – get ranked donors for request (owner only)
+export const getRankedDonors = catchAsync(async (req: Request, res: Response) => {
+  if (!req.user) throw new AppError("Unauthorized.", 401);
+
+  const id = req.params.id as string;
+  const rankedDonors = await requestService.getRankedDonorsForRequest(id, req.user);
+
+  res.status(200).json({
+    success: true,
+    data: rankedDonors,
+  });
+});

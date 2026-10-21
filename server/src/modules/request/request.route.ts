@@ -12,6 +12,7 @@ import {
   getMyRequests,
   getRequestById,
   cancelRequest,
+  getRankedDonors,
 } from "./request.controller.js";
 
 const router = Router();
@@ -40,6 +41,8 @@ router.get(
 );
 
 router.get("/requests/:id", requireAuth, getRequestById);
+
+router.get("/requests/:id/donors", requireAuth, getRankedDonors);
 
 router.patch("/requests/:id/cancel", requireAuth, cancelRequest);
 

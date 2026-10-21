@@ -1,6 +1,11 @@
 import { prisma } from "../../config/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import type { BloodGroup, Role } from "@prisma/client";
+import {
+  getCompatibleDonorGroups,
+  type BloodGroup as LibBloodGroup,
+} from "../../lib/bloodCompatibility.js";
+import { rankDonors } from "../../lib/donorRanking.js";
 import type {
   CreateRequestInput,
   ListRequestsQuery,
@@ -17,6 +22,17 @@ const BLOOD_GROUP_TO_ENUM: Record<string, BloodGroup> = {
   "AB-": "AB_NEGATIVE",
   "O+": "O_POSITIVE",
   "O-": "O_NEGATIVE",
+};
+
+const ENUM_TO_BLOOD_GROUP: Record<string, LibBloodGroup> = {
+  A_POSITIVE: "A+",
+  A_NEGATIVE: "A-",
+  B_POSITIVE: "B+",
+  B_NEGATIVE: "B-",
+  AB_POSITIVE: "AB+",
+  AB_NEGATIVE: "AB-",
+  O_POSITIVE: "O+",
+  O_NEGATIVE: "O-",
 };
 
 // Helper: Mark past-due OPEN or MATCHED requests as EXPIRED
@@ -280,4 +296,91 @@ export const cancelRequest = async (id: string, userId: string) => {
   ]);
 
   return updatedRequest;
+};
+
+// Return top 20 ranked candidate donors for the request (owner only)
+export const getRankedDonorsForRequest = async (
+  requestId: string,
+  user: { id: string; role: Role | string }
+) => {
+  const request = await prisma.bloodRequest.findUnique({
+    where: { id: requestId },
+  });
+
+  if (!request) {
+    throw new AppError("Blood request not found.", 404);
+  }
+
+  if (request.requesterId !== user.id && user.role !== "ADMIN") {
+    throw new AppError("Only the request owner can view ranked donors.", 403);
+  }
+
+  const patientGroup = ENUM_TO_BLOOD_GROUP[request.bloodGroup];
+  const compatibleGroups = getCompatibleDonorGroups(patientGroup);
+  const compatibleEnums = compatibleGroups.map((g) => BLOOD_GROUP_TO_ENUM[g]);
+
+  // Fetch candidate donors: available, compatible blood group, exclude requester
+  // Query same district first:
+  let candidates = await prisma.donorProfile.findMany({
+    where: {
+      userId: { not: request.requesterId },
+      isAvailable: true,
+      bloodGroup: { in: compatibleEnums },
+      district: request.district,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  // Falling back to all districts if fewer than 5
+  if (candidates.length < 5) {
+    candidates = await prisma.donorProfile.findMany({
+      where: {
+        userId: { not: request.requesterId },
+        isAvailable: true,
+        bloodGroup: { in: compatibleEnums },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  // Format candidates for ranking
+  const formattedCandidates = candidates.map((c) => ({
+    ...c,
+    bloodGroup: ENUM_TO_BLOOD_GROUP[c.bloodGroup],
+  }));
+
+  const ranked = rankDonors(formattedCandidates, {
+    bloodGroup: patientGroup,
+    district: request.district,
+    area: request.area,
+  });
+
+  return ranked.slice(0, 20).map((r) => ({
+    score: r.score,
+    reasons: r.reasons,
+    donor: {
+      id: r.donor.id,
+      userId: r.donor.userId,
+      name: r.donor.user?.name,
+      bloodGroup: r.donor.bloodGroup,
+      district: r.donor.district,
+      area: r.donor.area,
+      phone: r.donor.phone,
+      lastDonatedAt: r.donor.lastDonatedAt,
+    },
+  }));
 };
