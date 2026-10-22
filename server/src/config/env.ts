@@ -18,6 +18,7 @@ const envSchema = z.object({
   OPENROUTER_TIMEOUT_MS: z.coerce.number().default(30000),
   ADMIN_EMAIL: z.string().email("ADMIN_EMAIL must be a valid email").default("admin@bloodsync.com"),
   ADMIN_PASSWORD: z.string().min(8, "ADMIN_PASSWORD must be at least 8 characters").default("Admin@123456"),
+  DEMO_PASSWORD: z.string().min(8, "DEMO_PASSWORD must be at least 8 characters").default("Demo@123456"),
 });
 
 // Validate process.env against schema

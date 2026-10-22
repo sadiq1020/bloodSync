@@ -9,6 +9,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx prisma/seed.ts",
+    "seed:demo": "tsx prisma/seed-demo.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "eval:ai": "tsx src/scripts/evaluate-ai.ts"
