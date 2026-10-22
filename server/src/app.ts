@@ -15,6 +15,7 @@ import { donorRouter } from "./modules/donor/donor.route.js";
 import { requestRouter } from "./modules/request/request.route.js";
 import { donationRouter } from "./modules/donation/donation.route.js";
 import { aiRouter } from "./modules/ai/ai.route.js";
+import { adminRouter } from "./modules/admin/admin.route.js";
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.use("/api", donorRouter);
 app.use("/api", requestRouter);
 app.use("/api", donationRouter);
 app.use("/api", aiRouter);
+app.use("/api", adminRouter);
 
 // 404 handler for undefined routes
 app.use(notFound);
