@@ -311,6 +311,11 @@ export const getRequestDonations = async (
     createdAt: d.createdAt,
     updatedAt: d.updatedAt,
     donorName: d.donor.name,
+    name: d.donor.name,
+    donor: {
+      id: d.donor.id,
+      name: d.donor.name,
+    },
     bloodGroup: d.donor.donorProfile
       ? ENUM_TO_BLOOD_GROUP[d.donor.donorProfile.bloodGroup] ?? d.donor.donorProfile.bloodGroup
       : null,

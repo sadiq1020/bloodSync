@@ -14,16 +14,19 @@ export const generalLimiter = rateLimit({
   },
 });
 
-// Stricter rate limiter for AI parser route (20 requests per 15 minutes window)
+// Strict rate limiter for AI parsing (10 requests per 10 minutes per logged-in user)
 export const aiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  keyGenerator: (req) => {
+    return req.user?.id || req.ip || "anonymous";
+  },
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
     res.status(429).json({
       success: false,
-      message: "Too many AI parsing requests. Please wait a few minutes before trying again.",
+      message: "Too many AI requests. You can parse up to 10 messages every 10 minutes.",
     });
   },
 });

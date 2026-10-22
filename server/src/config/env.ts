@@ -15,6 +15,7 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url("FRONTEND_URL must be a valid URL"),
   OPENROUTER_API_KEY: z.string().min(1, "OPENROUTER_API_KEY is required"),
   OPENROUTER_MODEL: z.string().min(1, "OPENROUTER_MODEL is required"),
+  OPENROUTER_TIMEOUT_MS: z.coerce.number().default(30000),
   ADMIN_EMAIL: z.string().email("ADMIN_EMAIL must be a valid email").default("admin@bloodsync.com"),
   ADMIN_PASSWORD: z.string().min(8, "ADMIN_PASSWORD must be at least 8 characters").default("Admin@123456"),
 });
