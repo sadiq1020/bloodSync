@@ -1,26 +1,166 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg: #130b0d;
+  --color-surface: #1b1114;
+  --color-surface-2: #241619;
+  --color-surface-dark: #0d0709;
+
+  --color-line: rgba(242, 231, 225, 0.08);
+  --color-line-strong: rgba(242, 231, 225, 0.16);
+
+  --color-fg: #f2e7e1;
+  --color-fg-muted: #a8958f;
+  --color-fg-dim: #6f5f5b;
+
+  --color-blood: #d92d43;
+  --color-blood-hover: #ee4258;
+  --color-blood-deep: #7a1523;
+  --color-blood-light: #f05365;
+  --color-blood-text: #ff6b81;
+
+  --color-plasma: #e9b872;
+  --color-sage: #7fb89a;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 9999px;
+  --radius: 6px;
+
+  --font-sans:
+    var(--font-hanken), var(--font-hind-siliguri), system-ui, -apple-system,
+    sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-mono: var(--font-ibm-plex-mono), monospace;
+  --font-bangla: var(--font-hind-siliguri), sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #130b0d;
+  --foreground: #f2e7e1;
+  --card: #1b1114;
+  --card-foreground: #f2e7e1;
+  --popover: #1b1114;
+  --popover-foreground: #f2e7e1;
+  --primary: #d92d43;
+  --primary-foreground: #f2e7e1;
+  --secondary: #241619;
+  --secondary-foreground: #f2e7e1;
+  --muted: #241619;
+  --muted-foreground: #a8958f;
+  --accent: #241619;
+  --accent-foreground: #f2e7e1;
+  --destructive: #7a1523;
+  --destructive-foreground: #f2e7e1;
+  --border: rgba(242, 231, 225, 0.08);
+  --input: rgba(242, 231, 225, 0.08);
+  --ring: #d92d43;
+  --radius: 6px;
+  color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Base resets & typography */
+html {
+  color-scheme: dark;
+  background-color: #130b0d;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #130b0d;
+  color: #f2e7e1;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle fixed grain texture (inline SVG noise, ~4% opacity, no animation, non-interactive) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Text selection in blood color */
+::selection {
+  background-color: #7a1523;
+  color: #f2e7e1;
+}
+
+::-moz-selection {
+  background-color: #7a1523;
+  color: #f2e7e1;
+}
+
+/* Thin custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #130b0d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(242, 231, 225, 0.16);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(242, 231, 225, 0.28);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(242, 231, 225, 0.16) #130b0d;
+}
+
+/* Visible focus rings (blood color, offset) */
+:focus-visible {
+  outline: 2px solid #d92d43;
+  outline-offset: 2px;
+}
+
+/* Prefers-reduced-motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
