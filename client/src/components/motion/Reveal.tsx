@@ -1,14 +1,23 @@
 "use client";
 
-import { useRef, useEffect, useState, type ElementType } from "react";
+import { useRef, useEffect, useState } from "react";
 import { m, LazyMotion, domAnimation } from "motion/react";
 import { EASE, DURATION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
+export type RevealTag =
+  | "div"
+  | "section"
+  | "article"
+  | "main"
+  | "aside"
+  | "span"
+  | "p";
+
 export interface RevealProps {
   children: React.ReactNode;
   delay?: number;
-  as?: ElementType;
+  as?: RevealTag;
   className?: string;
 }
 
@@ -41,8 +50,21 @@ export function Reveal({
     return () => observer.disconnect();
   }, []);
 
-  // Motion component for the requested HTML element
-  const MotionComponent = ((m as Record<string, any>)[Tag as string] || m.div) as any;
+  // Map to supported m elements without arbitrary indexing
+  const MotionComponent =
+    Tag === "section"
+      ? m.section
+      : Tag === "article"
+      ? m.article
+      : Tag === "span"
+      ? m.span
+      : Tag === "p"
+      ? m.p
+      : Tag === "main"
+      ? m.main
+      : Tag === "aside"
+      ? m.aside
+      : m.div;
 
   return (
     <LazyMotion features={domAnimation}>

@@ -2,9 +2,10 @@ import { formatBloodGroup } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export interface BloodTypeBadgeProps {
-  group: string;
+  group?: string;
+  bloodGroup?: string;
   size?: "sm" | "md" | "lg" | "xl";
-  variant?: "plain" | "tag";
+  variant?: "plain" | "tag" | "pill";
   className?: string;
 }
 
@@ -46,11 +47,13 @@ const sizeConfig = {
  */
 export function BloodTypeBadge({
   group,
+  bloodGroup,
   size = "md",
   variant = "plain",
   className,
 }: BloodTypeBadgeProps) {
-  const formatted = formatBloodGroup(group);
+  const effectiveGroup = bloodGroup ?? group ?? "O+";
+  const formatted = formatBloodGroup(effectiveGroup);
   const signMatch = formatted.match(/[+−]$/);
   const sign = signMatch ? signMatch[0] : "";
   const letter = signMatch ? formatted.slice(0, -1) : formatted;

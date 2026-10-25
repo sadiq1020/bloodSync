@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 
 export interface LogoProps {
   size?: "sm" | "md" | "lg";
+  variant?: "full" | "mark" | "compact";
   showWordmark?: boolean;
   className?: string;
   href?: string;
@@ -33,12 +34,14 @@ const sizeConfig = {
  */
 export function Logo({
   size = "md",
-  showWordmark = true,
+  variant = "full",
+  showWordmark,
   className,
   href,
 }: LogoProps) {
   const maskId = useId();
   const config = sizeConfig[size];
+  const shouldShowWordmark = showWordmark ?? (variant !== "mark");
 
   const content = (
     <span
@@ -75,7 +78,7 @@ export function Logo({
         />
       </svg>
 
-      {showWordmark && (
+      {shouldShowWordmark && (
         <span
           className={cn(
             "font-display font-semibold text-fg tracking-tight",

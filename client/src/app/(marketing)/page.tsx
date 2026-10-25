@@ -1,12 +1,42 @@
+import type { Metadata } from "next";
+import {
+  Hero,
+  FactsStrip,
+  ProblemAi,
+  HowItWorks,
+  CompatibilityTeaser,
+  ClosingCta,
+} from "@/components/features/landing";
+
+export const metadata: Metadata = {
+  title: "BloodSync | Find blood donors in Bangladesh",
+  description:
+    "Targeted blood donation matching across 64 districts in Bangladesh. Connect urgent patient requests directly with eligible local donors.",
+  openGraph: {
+    title: "BloodSync | Find blood donors in Bangladesh",
+    description:
+      "Targeted blood donation matching across 64 districts in Bangladesh. Connect urgent patient requests directly with eligible local donors.",
+    type: "website",
+    url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    siteName: "BloodSync",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BloodSync | Find blood donors in Bangladesh",
+    description:
+      "Targeted blood donation matching across 64 districts in Bangladesh. Connect urgent patient requests directly with eligible local donors.",
+  },
+};
+
 export default function MarketingPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 text-center">
-      <h1 className="font-display text-fg text-4xl font-semibold tracking-tight md:text-5xl">
-        BloodSync
-      </h1>
-      <p className="text-fg-muted mt-3 max-w-md text-sm">
-        Emergency blood donor and request matching platform.
-      </p>
-    </main>
+    <>
+      <Hero />
+      <FactsStrip />
+      <ProblemAi />
+      <HowItWorks />
+      <CompatibilityTeaser />
+      <ClosingCta />
+    </>
   );
 }

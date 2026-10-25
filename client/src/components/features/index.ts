@@ -1,2 +1,1 @@
-// Feature-specific components placeholder
-export {};
+export * from "./landing";

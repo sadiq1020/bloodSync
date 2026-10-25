@@ -60,11 +60,7 @@ export function CountUp({
 
   // Animate once triggered
   useEffect(() => {
-    if (!triggered) return;
-    if (prefersReducedMotion) {
-      setDisplayValue(value);
-      return;
-    }
+    if (!triggered || prefersReducedMotion) return;
 
     const startTime = performance.now();
     const startValue = 0;
@@ -88,10 +84,12 @@ export function CountUp({
     return () => cancelAnimationFrame(frameId);
   }, [triggered, value, duration, prefersReducedMotion]);
 
+  const outputValue = prefersReducedMotion ? value : displayValue;
+
   return (
     <span ref={ref} className={cn("tabular-nums", className)}>
       {prefix}
-      {formatter.format(displayValue)}
+      {formatter.format(outputValue)}
       {suffix}
     </span>
   );
