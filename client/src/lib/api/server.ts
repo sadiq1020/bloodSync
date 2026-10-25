@@ -82,8 +82,13 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   try {
     return await serverFetch<CurrentUser>("/api/me");
   } catch (err) {
-    if (err instanceof ApiError && err.status === 401) {
-      return null;
+    if (err instanceof ApiError) {
+      if (err.status === 401) {
+        return null;
+      }
+      if (err.status === 403) {
+        throw err;
+      }
     }
     // Return null for unauthenticated sessions
     return null;

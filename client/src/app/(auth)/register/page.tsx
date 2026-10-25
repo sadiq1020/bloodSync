@@ -1,12 +1,15 @@
+import type { Metadata } from "next";
+import { RegisterForm } from "@/components/features/auth/RegisterForm";
+
+export const metadata: Metadata = {
+  title: "Register | BloodSync",
+  description: "Create a BloodSync account to find blood donors or volunteer in Bangladesh.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default function RegisterPage() {
-  return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
-      <h1 className="font-display text-fg text-3xl font-semibold">
-        Create an Account
-      </h1>
-      <p className="text-fg-muted mt-2 text-sm">
-        Join the network to find donors or answer emergency requests.
-      </p>
-    </div>
-  );
+  return <RegisterForm />;
 }
