@@ -153,6 +153,51 @@ body::before {
   outline-offset: 2px;
 }
 
+/* Urgency badge pulse animation (disabled for reduced motion by the block below) */
+@keyframes urgency-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.75);
+  }
+}
+
+.urgency-pulse {
+  animation: urgency-pulse 1.6s ease-in-out infinite;
+}
+
+/* ECG / PulseLine draw-on animation */
+@keyframes pulse-draw-once {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse-draw-loop {
+  0% {
+    stroke-dashoffset: 1;
+  }
+  60%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.pulse-line-once {
+  animation: pulse-draw-once 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.pulse-line-loop {
+  animation: pulse-draw-loop 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
 /* Prefers-reduced-motion support */
 @media (prefers-reduced-motion: reduce) {
   *,

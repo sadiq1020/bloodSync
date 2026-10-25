@@ -1,0 +1,19 @@
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="icon-pulse-notch">
+      <rect width="24" height="24" fill="white" />
+      <path
+        d="M3 15.5 H7.5 L9 13 L10.5 18 L12.5 10.5 L14.5 17 L16 15.5 H21"
+        stroke="black"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </mask>
+  </defs>
+  <path
+    d="M12 2.5 C10.5 4.5 5 11.5 5 16 A7 7 0 0 0 19 16 C19 11.5 13.5 4.5 12 2.5 Z"
+    fill="#D92D43"
+    mask="url(#icon-pulse-notch)"
+  />
+</svg>

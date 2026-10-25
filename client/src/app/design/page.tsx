@@ -55,6 +55,20 @@ import {
   SparkleIcon,
   BellIcon,
 } from "@phosphor-icons/react";
+// Brand + motion components
+import { Logo } from "@/components/brand/Logo";
+import { BloodTypeBadge } from "@/components/brand/BloodTypeBadge";
+import { StatusBadge } from "@/components/brand/StatusBadge";
+import { UrgencyBadge } from "@/components/brand/UrgencyBadge";
+import { SpecimenCard } from "@/components/brand/SpecimenCard";
+import { VialProgress } from "@/components/brand/VialProgress";
+import { PulseLine } from "@/components/brand/PulseLine";
+import { Reveal } from "@/components/motion/Reveal";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+import { CountUp } from "@/components/motion/CountUp";
+import { BLOOD_GROUPS } from "@/lib/constants";
+
+const ALL_BLOOD_GROUPS = BLOOD_GROUPS as unknown as string[];
 
 export default function DesignFoundationPage() {
   const [selectedBloodGroup, setSelectedBloodGroup] = React.useState("A+");
@@ -839,6 +853,236 @@ export default function DesignFoundationPage() {
                 (~5.2:1 contrast).
               </li>
             </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ── BRAND & MOTION ─────────────────────────────────────── */}
+      <section className="mt-16 border-t border-line pt-12">
+        <h2 className="font-display text-fg mb-8 text-2xl font-medium">
+          Brand &amp; Motion (Prompt F4)
+        </h2>
+
+        {/* Logo */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            Logo
+          </h3>
+          <div className="flex flex-wrap items-center gap-8">
+            <Logo size="sm" href="/" />
+            <Logo size="md" href="/" />
+            <Logo size="lg" href="/" />
+            <Logo size="md" showWordmark={false} />
+          </div>
+        </div>
+
+        {/* BloodTypeBadge – Plain */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            BloodTypeBadge — Plain
+          </h3>
+          {(["sm", "md", "lg", "xl"] as const).map((sz) => (
+            <div key={sz} className="mb-4">
+              <p className="text-fg-dim mb-2 font-mono text-xs">{sz}</p>
+              <div className="flex flex-wrap items-end gap-4">
+                {ALL_BLOOD_GROUPS.map((g) => (
+                  <BloodTypeBadge key={g} group={g} size={sz} variant="plain" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* BloodTypeBadge – Tag */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            BloodTypeBadge — Tag
+          </h3>
+          {(["sm", "md", "lg", "xl"] as const).map((sz) => (
+            <div key={sz} className="mb-4">
+              <p className="text-fg-dim mb-2 font-mono text-xs">{sz}</p>
+              <div className="flex flex-wrap items-end gap-4">
+                {ALL_BLOOD_GROUPS.map((g) => (
+                  <BloodTypeBadge key={g} group={g} size={sz} variant="tag" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Status Badges */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            Status Badges
+          </h3>
+          <div className="mb-3">
+            <p className="text-fg-dim mb-2 font-mono text-xs">Request Status</p>
+            <div className="flex flex-wrap gap-2">
+              {(["OPEN", "MATCHED", "FULFILLED", "EXPIRED", "CANCELLED"] as const).map((s) => (
+                <StatusBadge key={s} status={s} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-fg-dim mb-2 font-mono text-xs">Donation Status</p>
+            <div className="flex flex-wrap gap-2">
+              {(["PENDING", "ACCEPTED", "COMPLETED", "CANCELLED"] as const).map((s) => (
+                <StatusBadge key={s} status={s} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Urgency Badges */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            Urgency Badges (CRITICAL + URGENT have CSS pulse)
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {(["NORMAL", "URGENT", "CRITICAL"] as const).map((u) => (
+              <UrgencyBadge key={u} urgency={u} />
+            ))}
+          </div>
+        </div>
+
+        {/* SpecimenCard */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            SpecimenCard
+          </h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <SpecimenCard header="REQ-0142 · RAJSHAHI" footer="Expires: Dec 15, 2026" accent="blood">
+              <p className="text-fg text-sm">Patient: Rahim Islam</p>
+              <p className="text-fg-muted mt-1 text-sm">3 units B+ required</p>
+            </SpecimenCard>
+            <SpecimenCard header="REQ-0055 · DHAKA" accent="plasma">
+              <p className="text-fg text-sm">Patient: Nusrat Jahan</p>
+              <p className="text-fg-muted mt-1 text-sm">1 unit AB− required</p>
+            </SpecimenCard>
+            <SpecimenCard footer="Fulfilled · 2 donors">
+              <p className="text-fg text-sm">No header variant</p>
+              <p className="text-fg-muted mt-1 text-sm">Body + footer only</p>
+            </SpecimenCard>
+          </div>
+        </div>
+
+        {/* VialProgress */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            VialProgress (animates on scroll into view)
+          </h3>
+          <div className="flex flex-wrap items-end gap-8">
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-fg-dim font-mono text-xs">0/3</p>
+              <VialProgress filled={0} total={3} />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-fg-dim font-mono text-xs">1/3</p>
+              <VialProgress filled={1} total={3} />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-fg-dim font-mono text-xs">3/3</p>
+              <VialProgress filled={3} total={3} />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-fg-dim font-mono text-xs">7/10</p>
+              <VialProgress filled={7} total={10} size="lg" />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-fg-dim font-mono text-xs">sm size</p>
+              <VialProgress filled={2} total={4} size="sm" />
+            </div>
+          </div>
+        </div>
+
+        {/* PulseLine */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            PulseLine
+          </h3>
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-fg-dim mb-2 font-mono text-xs">Once — blood</p>
+              <PulseLine className="h-10 w-48" color="blood" loop={false} />
+            </div>
+            <div>
+              <p className="text-fg-dim mb-2 font-mono text-xs">Loop — plasma</p>
+              <PulseLine className="h-10 w-48" color="plasma" loop={true} />
+            </div>
+            <div>
+              <p className="text-fg-dim mb-2 font-mono text-xs">Once — sage</p>
+              <PulseLine className="h-10 w-48" color="sage" loop={false} />
+            </div>
+          </div>
+        </div>
+
+        {/* Reveal */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            Reveal (scroll down to trigger)
+          </h3>
+          <Reveal delay={0}>
+            <div className="rounded-[6px] border border-line bg-surface p-4">
+              <p className="text-fg text-sm">This box fades up on viewport entry (no delay).</p>
+            </div>
+          </Reveal>
+          <Reveal delay={0.15} className="mt-3">
+            <div className="rounded-[6px] border border-line bg-surface p-4">
+              <p className="text-fg text-sm">This one with 150ms delay.</p>
+            </div>
+          </Reveal>
+        </div>
+
+        {/* Stagger */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            Stagger
+          </h3>
+          <Stagger className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {["Aorta", "Plasma", "Marrow", "Serum"].map((label) => (
+              <StaggerItem key={label}>
+                <div className="rounded-[6px] border border-line bg-surface p-3 text-center">
+                  <span className="text-fg text-sm font-medium">{label}</span>
+                </div>
+              </StaggerItem>
+            ))}
+          </Stagger>
+        </div>
+
+        {/* CountUp */}
+        <div className="mb-10">
+          <h3 className="text-fg-muted mb-4 font-mono text-xs uppercase tracking-widest">
+            CountUp
+          </h3>
+          <div className="flex flex-wrap gap-8">
+            <div className="text-center">
+              <CountUp
+                value={4218}
+                className="font-display text-blood text-4xl font-semibold"
+              />
+              <p className="text-fg-muted mt-1 font-mono text-xs uppercase tracking-widest">
+                Total Donors
+              </p>
+            </div>
+            <div className="text-center">
+              <CountUp
+                value={1342}
+                className="font-display text-plasma text-4xl font-semibold"
+              />
+              <p className="text-fg-muted mt-1 font-mono text-xs uppercase tracking-widest">
+                Requests Fulfilled
+              </p>
+            </div>
+            <div className="text-center">
+              <CountUp
+                value={99}
+                suffix="%"
+                className="font-display text-sage text-4xl font-semibold"
+              />
+              <p className="text-fg-muted mt-1 font-mono text-xs uppercase tracking-widest">
+                Match Rate
+              </p>
+            </div>
           </div>
         </div>
       </section>

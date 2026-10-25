@@ -7,6 +7,7 @@ import {
 } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "@/providers";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -51,10 +52,12 @@ export default function RootLayout({
       className={`${fraunces.variable} ${hankenGrotesk.variable} ${ibmPlexMono.variable} ${hindSiliguri.variable} dark`}
     >
       <body className="bg-bg text-fg selection:bg-blood-deep selection:text-fg min-h-screen antialiased">
-        <TooltipProvider>
-          {children}
-          <Toaster />
-        </TooltipProvider>
+        <Providers>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
+        </Providers>
       </body>
     </html>
   );
