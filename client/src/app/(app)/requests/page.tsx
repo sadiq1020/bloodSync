@@ -1,31 +1,29 @@
-import { getCurrentUser } from "@/lib/api/server";
-import { SignOutButton } from "@/components/features/auth/SignOutButton";
+import { PageHeader } from "@/components/layout/PageHeader";
+import Link from "next/link";
 
 export default async function RequestsPage() {
-  const user = await getCurrentUser();
-
   return (
-    <div className="p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-line pb-4">
-        <div>
-          <h1 className="font-display text-fg text-2xl font-semibold">
-            Emergency Blood Requests
-          </h1>
-          <p className="text-fg-muted mt-1 text-sm">
-            Browse and respond to active emergency blood requests across Bangladesh.
-          </p>
-        </div>
+    <>
+      <PageHeader
+        eyebrow="Blood requests"
+        title="Emergency Blood Requests"
+        description="Browse and respond to active emergency blood requests across Bangladesh."
+        actions={
+          <Link
+            href="/requests/new"
+            className="flex min-h-[38px] items-center justify-center rounded-[4px] bg-blood px-4 font-sans text-sm font-medium text-fg transition-colors hover:bg-blood-hover focus-visible:outline-2 focus-visible:outline-blood"
+          >
+            Request blood
+          </Link>
+        }
+      />
 
-        {/* Temporary check display for testing flow */}
-        {user && (
-          <div className="flex items-center gap-3 rounded-[4px] border border-line bg-surface p-2.5">
-            <span className="font-sans text-xs text-fg-muted">
-              Signed in as <strong className="text-fg">{user.name}</strong> ({user.email})
-            </span>
-            <SignOutButton />
-          </div>
-        )}
+      {/* TODO: Request list will be implemented in a future prompt */}
+      <div className="rounded-[6px] border border-line bg-surface-2 p-12 text-center">
+        <p className="font-sans text-sm text-fg-muted">
+          Blood request listings coming soon.
+        </p>
       </div>
-    </div>
+    </>
   );
 }
