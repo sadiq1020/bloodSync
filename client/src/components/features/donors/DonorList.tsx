@@ -39,7 +39,8 @@ function CardSkeleton() {
 export function DonorList({ initialData, initialParams }: DonorListProps) {
   const [params, setParams] = useQueryStates(donorsParsers, { shallow: true });
   const listTopRef = React.useRef<HTMLDivElement>(null);
-  const isFirstLoad = React.useRef(true);
+  const isInitialMount = React.useRef(true);
+  const [initialMountTime] = React.useState(() => Date.now());
 
   const activeParams = {
     bloodGroup: params.bloodGroup,
@@ -60,7 +61,7 @@ export function DonorList({ initialData, initialParams }: DonorListProps) {
       return apiFetch<PaginatedResponse<PublicDonor>>(`/api/donors/search?${qs}`);
     },
     initialData: isInitialKey ? initialData : undefined,
-    initialDataUpdatedAt: isInitialKey ? Date.now() : undefined,
+    initialDataUpdatedAt: isInitialKey ? initialMountTime : undefined,
     staleTime: 15_000,
     placeholderData: keepPreviousData,
     // No polling for donors — not time-critical
@@ -75,14 +76,12 @@ export function DonorList({ initialData, initialParams }: DonorListProps) {
   const isShowingPrev = isFetching && !!data;
 
   React.useEffect(() => {
-    if (!isFirstLoad.current) {
-      listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
     }
+    listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [params.page]);
-
-  React.useEffect(() => {
-    isFirstLoad.current = false;
-  }, []);
 
   return (
     <div className="space-y-4">
@@ -169,11 +168,11 @@ export function DonorList({ initialData, initialParams }: DonorListProps) {
           {items.map((donor, i) => (
             <m.div
               key={`${donor.user.name}-${donor.district}-${donor.area}-${i}`}
-              initial={isFirstLoad.current ? { opacity: 0, y: 8 } : false}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.18,
-                delay: isFirstLoad.current ? i * 0.035 : 0,
+                delay: i * 0.035,
               }}
             >
               <DonorSearchCard donor={donor} />

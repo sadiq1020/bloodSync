@@ -8,6 +8,8 @@ import { EASE } from "@/lib/motion";
 export interface VialProgressProps {
   filled: number;
   total: number;
+  secondary?: number;
+  caption?: string;
   size?: "sm" | "md" | "lg";
   label?: boolean;
   className?: string;
@@ -43,12 +45,14 @@ function useIntersectionOnce(ref: React.RefObject<Element | null>) {
 /**
  * VialProgress (Client Component – needs IntersectionObserver + framer-motion animation).
  * Renders an SVG blood bag/vial that animates its liquid fill on first viewport entry.
- * The top of the liquid has a slow two-path wave; tick marks delineate each unit.
+ * Supports a secondary layer for accepted (pending completion) units.
  * Fully accessible via role="img" and aria-label.
  */
 export function VialProgress({
   filled,
   total,
+  secondary = 0,
+  caption,
   size = "md",
   label = true,
   className,
@@ -57,9 +61,16 @@ export function VialProgress({
   const triggered = useIntersectionOnce(containerRef);
   const prefersReducedMotion = useReducedMotion();
 
-  const clampedFilled = Math.max(0, Math.min(filled, total));
   const clampedTotal = Math.max(1, total);
-  const fillRatio = clampedFilled / clampedTotal;
+  const clampedFilled = Math.max(0, Math.min(filled, clampedTotal));
+  const clampedSecondary = Math.max(
+    0,
+    Math.min(secondary, clampedTotal - clampedFilled)
+  );
+  const totalLiquid = clampedFilled + clampedSecondary;
+  const fillRatio = totalLiquid / clampedTotal;
+  const bloodRatio = clampedFilled / clampedTotal;
+  const secondaryRatio = clampedSecondary / clampedTotal;
 
   const { vialW, vialH, fontSize } = sizeConfig[size];
 
@@ -67,8 +78,13 @@ export function VialProgress({
   const padding = 4;
   const innerW = vialW - padding * 2;
   const innerH = vialH - padding * 2;
-  const fillHeight = innerH * fillRatio;
-  const fillY = padding + innerH - fillHeight;
+
+  const bloodHeight = innerH * bloodRatio;
+  const secondaryHeight = innerH * secondaryRatio;
+  const totalHeight = innerH * fillRatio;
+
+  const fillY = padding + innerH - totalHeight;
+  const bloodY = padding + innerH - bloodHeight;
 
   // Tick marks (right side of vial interior)
   const tickCount = clampedTotal;
@@ -77,12 +93,12 @@ export function VialProgress({
     return padding + innerH - innerH * ratio;
   });
 
-  // Wave animation paths (two overlapping wavy lines at liquid surface)
+  // Wave animation paths at top of liquid surface
   const buildWavePath = (phase: number) => {
     const amplitude = 1.5;
     const segments = 4;
     const segW = innerW / segments;
-    const baseY = fillHeight > 0 ? fillY : fillY;
+    const baseY = fillY;
     let d = `M ${padding} ${baseY + amplitude * Math.sin(phase)}`;
     for (let i = 1; i <= segments; i++) {
       const x = padding + i * segW;
@@ -96,8 +112,12 @@ export function VialProgress({
   };
 
   const shouldAnimate = triggered && !prefersReducedMotion;
-  const targetFillY = shouldAnimate ? fillY : padding + innerH - fillHeight;
-  const staticFillY = padding + innerH - fillHeight;
+  const waveColor = clampedSecondary > 0 ? "#E89568" : "#D92D43";
+
+  const ariaLabel =
+    clampedSecondary > 0
+      ? `${clampedFilled} completed, ${clampedSecondary} accepted of ${clampedTotal} unit${clampedTotal !== 1 ? "s" : ""}`
+      : `${clampedFilled} of ${clampedTotal} unit${clampedTotal !== 1 ? "s" : ""} donated`;
 
   return (
     <LazyMotion features={domAnimation}>
@@ -112,7 +132,7 @@ export function VialProgress({
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
           role="img"
-          aria-label={`${clampedFilled} of ${clampedTotal} unit${clampedTotal !== 1 ? "s" : ""} donated`}
+          aria-label={ariaLabel}
         >
           {/* Vial outer shape */}
           <rect
@@ -125,45 +145,75 @@ export function VialProgress({
             strokeWidth={1}
           />
 
-          {/* Blood fill (no wave) */}
-          {fillRatio > 0 && (
+          {/* Solid blood layer (completed units) */}
+          {bloodRatio > 0 && (
             <m.rect
               x={padding + 1}
               width={innerW - 2}
-              height={fillHeight > 0 ? fillHeight - 1 : 0}
-              rx={fillRatio >= 0.99 ? 2 : 0}
+              height={Math.max(0, bloodHeight - 1)}
+              rx={bloodRatio >= 0.99 && secondaryRatio === 0 ? 2 : 0}
               fill="#D92D43"
-              fillOpacity={0.85}
+              fillOpacity={0.88}
               initial={{ y: padding + innerH, height: 0 }}
               animate={
                 shouldAnimate || (!prefersReducedMotion && triggered === false)
                   ? {
-                      y: targetFillY + 1,
-                      height: Math.max(0, fillHeight - 1),
+                      y: bloodY + 1,
+                      height: Math.max(0, bloodHeight - 1),
                     }
-                  : { y: staticFillY + 1, height: Math.max(0, fillHeight - 1) }
+                  : { y: bloodY + 1, height: Math.max(0, bloodHeight - 1) }
               }
               transition={
                 shouldAnimate
-                  ? { duration: 1.2, ease: EASE as [number, number, number, number] }
+                  ? { duration: 1.1, ease: EASE as [number, number, number, number] }
                   : { duration: 0 }
               }
             />
           )}
 
-          {/* Wave overlay on top of fill (CSS animation, reduced-motion disabled by globals.css) */}
+          {/* Plasma secondary layer (accepted units) above blood */}
+          {secondaryRatio > 0 && (
+            <m.rect
+              x={padding + 1}
+              width={innerW - 2}
+              height={Math.max(0, secondaryHeight - 1)}
+              rx={fillRatio >= 0.99 ? 2 : 0}
+              fill="#E89568"
+              fillOpacity={0.8}
+              initial={{ y: bloodY, height: 0 }}
+              animate={
+                shouldAnimate || (!prefersReducedMotion && triggered === false)
+                  ? {
+                      y: fillY + 1,
+                      height: Math.max(0, secondaryHeight - 1),
+                    }
+                  : { y: fillY + 1, height: Math.max(0, secondaryHeight - 1) }
+              }
+              transition={
+                shouldAnimate
+                  ? {
+                      duration: 1.2,
+                      delay: 0.15,
+                      ease: EASE as [number, number, number, number],
+                    }
+                  : { duration: 0 }
+              }
+            />
+          )}
+
+          {/* Wave overlay at liquid surface */}
           {fillRatio > 0 && fillRatio < 1 && (
             <>
               <path
                 d={buildWavePath(0)}
-                fill="#D92D43"
+                fill={waveColor}
                 fillOpacity={0.4}
                 className="wave-1"
                 style={{ transformOrigin: "center" }}
               />
               <path
                 d={buildWavePath(Math.PI / 3)}
-                fill="#D92D43"
+                fill={waveColor}
                 fillOpacity={0.25}
                 className="wave-2"
                 style={{ transformOrigin: "center" }}
@@ -206,11 +256,13 @@ export function VialProgress({
         {label && (
           <span
             className={cn(
-              "font-mono uppercase tracking-wider text-fg-dim select-none",
+              "font-mono uppercase tracking-wider text-fg-dim select-none text-center",
               fontSize
             )}
           >
-            {clampedFilled} / {clampedTotal} UNIT{clampedTotal !== 1 ? "S" : ""}
+            {caption
+              ? caption
+              : `${clampedFilled} / ${clampedTotal} UNIT${clampedTotal !== 1 ? "S" : ""}`}
           </span>
         )}
       </div>

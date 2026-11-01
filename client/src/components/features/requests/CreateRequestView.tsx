@@ -243,7 +243,7 @@ export function CreateRequestView({
       toast.success("Request posted.");
       const requestId = data?.id;
       if (requestId) {
-        router.push(`/requests/${requestId}`);
+        router.push(`/requests/${requestId}?created=1`);
       } else {
         router.push("/requests");
       }

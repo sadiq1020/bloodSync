@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useQueryStates } from "nuqs";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { m } from "motion/react";
@@ -72,12 +73,12 @@ function EmptyNoFilters() {
       <p className="font-sans text-xs text-fg-dim">
         Be the first to post — someone may need your blood group.
       </p>
-      <a
+      <Link
         href="/requests/new"
         className="mt-1 flex min-h-[36px] items-center rounded-[4px] bg-blood px-4 font-sans text-xs font-medium text-fg transition-colors hover:bg-blood-hover"
       >
         Request blood
-      </a>
+      </Link>
     </div>
   );
 }
@@ -89,10 +90,9 @@ export function RequestList({
 }: RequestListProps) {
   const [params, setParams] = useQueryStates(requestsParsers, { shallow: true });
   const listTopRef = React.useRef<HTMLDivElement>(null);
+  const isInitialMount = React.useRef(true);
   const [lastFetchTime, setLastFetchTime] = React.useState<Date>(() => new Date());
-
-  // Track if this is first load (to only animate list on first render)
-  const isFirstLoad = React.useRef(true);
+  const [initialMountTime] = React.useState(() => Date.now());
 
   const activeParams = {
     district: params.district,
@@ -122,7 +122,7 @@ export function RequestList({
     // Only seed initialData when the URL params match the server-rendered data
     initialData: isInitialKey ? initialData : undefined,
     // With initialData, don't refetch immediately — it's already fresh
-    initialDataUpdatedAt: isInitialKey ? Date.now() : undefined,
+    initialDataUpdatedAt: isInitialKey ? initialMountTime : undefined,
     staleTime: 15_000,
     placeholderData: keepPreviousData,
     // Poll every 30 s, but not when the tab is in the background
@@ -142,14 +142,12 @@ export function RequestList({
 
   // When page changes, scroll to the top of the list
   React.useEffect(() => {
-    if (!isFirstLoad.current) {
-      listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
     }
+    listTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [params.page]);
-
-  React.useEffect(() => {
-    isFirstLoad.current = false;
-  }, []);
 
   const clearFilters = () =>
     setParams({
@@ -250,12 +248,11 @@ export function RequestList({
           {items.map((request, i) => (
             <m.div
               key={request.id}
-              // Only animate on very first render, never on refetch
-              initial={isFirstLoad.current ? { opacity: 0, y: 8 } : false}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
                 duration: 0.2,
-                delay: isFirstLoad.current ? i * 0.04 : 0,
+                delay: i * 0.04,
               }}
             >
               <RequestCard request={request} currentUserId={currentUserId} />

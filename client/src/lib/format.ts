@@ -110,3 +110,22 @@ export function formatRequestCode(id: string | null | undefined): string {
 
   return `REQ-${suffix}`;
 }
+
+/**
+ * Formats a calendar date and time (e.g. 'Nov 1, 2026, 4:30 PM') using standard Intl APIs.
+ */
+export function formatDateTime(
+  dateInput: Date | string | number | null | undefined,
+  locale: string = "en-US"
+): string {
+  if (!dateInput) return "";
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}

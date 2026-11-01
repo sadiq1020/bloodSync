@@ -13,11 +13,14 @@ import type { District } from "@/lib/constants/districts";
 export function DonorFilters() {
   const [params, setParams] = useQueryStates(donorsParsers, { shallow: true });
 
+  const [prevArea, setPrevArea] = React.useState(params.area);
   const [areaInput, setAreaInput] = React.useState(params.area ?? "");
-  // Sync from URL (e.g. on back navigation)
-  React.useEffect(() => {
+
+  // Sync from URL (e.g. on back navigation) during render
+  if (params.area !== prevArea) {
+    setPrevArea(params.area);
     setAreaInput(params.area ?? "");
-  }, [params.area]);
+  }
 
   // Debounce area → URL by 400 ms
   React.useEffect(() => {

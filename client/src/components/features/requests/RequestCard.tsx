@@ -18,9 +18,6 @@ function getAccent(urgency: string): "blood" | "plasma" | "none" {
   return "none";
 }
 
-function isNew(createdAt: string): boolean {
-  return Date.now() - new Date(createdAt).getTime() < 60 * 60 * 1000;
-}
 
 /** Pure presentational card — no hooks, renders anywhere (server or client). */
 export function RequestCard({ request, currentUserId }: RequestCardProps) {
@@ -41,14 +38,12 @@ export function RequestCard({ request, currentUserId }: RequestCardProps) {
   const displayBloodGroup = formatBloodGroup(bloodGroup);
   const accent = getAccent(urgency);
   const isOwn = currentUserId ? currentUserId === requesterId : false;
-  const isNewCard = isNew(createdAt);
-
-  const now = Date.now();
-  const neededByDate = new Date(neededBy);
-  const isOverdue = neededByDate.getTime() < now;
+  const isOverdue = status === "EXPIRED";
+  const relativeNeeded = formatRelativeTime(neededBy);
+  const isNewCard = status === "OPEN" && formatRelativeTime(createdAt).includes("minute");
   const neededByText = isOverdue
     ? "overdue"
-    : `needed ${formatRelativeTime(neededBy)}`;
+    : `needed ${relativeNeeded}`;
 
   const ariaLabel = `${displayBloodGroup} blood needed at ${hospital}, ${district}${urgency !== "NORMAL" ? `, ${urgency.toLowerCase()}` : ""}`;
 

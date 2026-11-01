@@ -5,3 +5,4 @@ export * from "./CreateRequestView";
 export * from "./RequestCard";
 export * from "./RequestFilters";
 export * from "./RequestList";
+export * from "./detail";

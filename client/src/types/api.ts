@@ -178,3 +178,39 @@ export interface AiParseResponse {
   matchingDonorsCount: number | null;
 }
 
+export interface RequestDonationVolunteer {
+  id: string;
+  requestId: string;
+  donorId: string;
+  status: DonationStatus;
+  createdAt: string;
+  updatedAt: string;
+  donorName: string;
+  name: string;
+  donor: {
+    id: string;
+    name: string;
+  };
+  bloodGroup: string | null;
+  district: string | null;
+  area: string | null;
+  phone: string | null;
+}
+
+export interface RankedDonorCandidate {
+  id: string;
+  userId: string;
+  name: string;
+  bloodGroup: string;
+  district: string;
+  area: string;
+  phone: string;
+  lastDonatedAt: string | null;
+}
+
+export interface RankedDonorResult {
+  score: number;
+  reasons: string[];
+  donor: RankedDonorCandidate;
+}
+
