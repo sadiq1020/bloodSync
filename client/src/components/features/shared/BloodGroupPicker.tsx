@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils";
 
 export interface BloodGroupPickerProps {
   value?: BloodGroup | string;
-  onChange: (value: BloodGroup) => void;
+  onChange: (value: BloodGroup | undefined) => void;
   disabled?: boolean;
   error?: string;
   aiFilled?: boolean;
   needsCheck?: boolean;
   hasAiFlash?: boolean;
+  /** When true, renders an 'All' chip that clears the selection. */
+  clearable?: boolean;
 }
 
 export function BloodGroupPicker({
@@ -23,6 +25,7 @@ export function BloodGroupPicker({
   aiFilled,
   needsCheck,
   hasAiFlash,
+  clearable,
 }: BloodGroupPickerProps) {
   return (
     <fieldset
@@ -61,6 +64,28 @@ export function BloodGroupPicker({
         aria-label="Select blood group"
         className="grid grid-cols-4 gap-2"
       >
+        {clearable && (
+          <label
+            className={cn(
+              "col-span-4 flex min-h-[36px] cursor-pointer items-center justify-center rounded-[4px] border text-center transition-all duration-150 select-none",
+              "focus-within:ring-2 focus-within:ring-blood focus-within:ring-offset-2 focus-within:ring-offset-bg",
+              !value
+                ? "border-blood bg-blood-deep/20 shadow-xs"
+                : "border-line bg-surface hover:border-line-strong hover:bg-surface-2"
+            )}
+          >
+            <input
+              type="radio"
+              name="bloodGroup"
+              value=""
+              checked={!value}
+              onChange={() => onChange(undefined)}
+              disabled={disabled}
+              className="sr-only"
+            />
+            <span className="font-mono text-xs font-medium text-fg-muted">All groups</span>
+          </label>
+        )}
         {BLOOD_GROUPS.map((group) => {
           const isSelected = value === group;
           const display = formatBloodGroup(group);

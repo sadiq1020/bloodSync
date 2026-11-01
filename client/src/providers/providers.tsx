@@ -4,6 +4,7 @@ import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { MotionConfig, LazyMotion, domAnimation } from "motion/react";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 function createQueryClient() {
   return new QueryClient({
@@ -32,15 +33,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => createQueryClient());
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <MotionConfig reducedMotion="user">
-        <LazyMotion features={domAnimation} strict>
-          {children}
-        </LazyMotion>
-      </MotionConfig>
-      {process.env.NODE_ENV === "development" && (
-        <ReactQueryDevtools initialIsOpen={false} />
-      )}
-    </QueryClientProvider>
+    <NuqsAdapter>
+      <QueryClientProvider client={queryClient}>
+        <MotionConfig reducedMotion="user">
+          <LazyMotion features={domAnimation} strict>
+            {children}
+          </LazyMotion>
+        </MotionConfig>
+        {process.env.NODE_ENV === "development" && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </QueryClientProvider>
+    </NuqsAdapter>
   );
 }

@@ -234,8 +234,8 @@ export function RequestForm({
         render={({ field }) => (
           <BloodGroupPicker
             value={field.value}
-            onChange={(val: BloodGroup) => {
-              field.onChange(val);
+            onChange={(val: BloodGroup | undefined) => {
+              if (val) field.onChange(val);
               if (onFieldEdit) onFieldEdit("bloodGroup");
             }}
             disabled={isPending}
@@ -394,8 +394,8 @@ export function RequestForm({
             <DistrictCombobox
               id="request-district"
               value={field.value}
-              onChange={(val: District) => {
-                field.onChange(val);
+              onChange={(val: District | undefined) => {
+                if (val) field.onChange(val);
                 if (onFieldEdit) onFieldEdit("district");
               }}
               disabled={isPending}

@@ -1,13 +1,45 @@
-import { PageHeader } from "@/components/layout/PageHeader";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { RequestFilters } from "@/components/features/requests/RequestFilters";
+import { RequestList } from "@/components/features/requests/RequestList";
+import { requestsCache } from "@/lib/search-params/requests";
+import { serverFetch } from "@/lib/api/server";
+import { getCurrentUser } from "@/lib/api/server";
+import type { PaginatedResponse, BloodRequest } from "@/types/api";
 
-export default async function RequestsPage() {
+export const metadata: Metadata = {
+  title: "Blood Requests — BloodSync",
+  description: "Browse and respond to active emergency blood requests across Bangladesh.",
+};
+
+
+interface RequestsPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function RequestsPage({ searchParams }: RequestsPageProps) {
+  const parsedParams = await requestsCache.parse(await searchParams);
+
+  const qs = new URLSearchParams();
+  if (parsedParams.district) qs.set("district", parsedParams.district);
+  if (parsedParams.bloodGroup) qs.set("bloodGroup", parsedParams.bloodGroup);
+  if (parsedParams.urgency) qs.set("urgency", parsedParams.urgency);
+  if (parsedParams.status) qs.set("status", parsedParams.status);
+  qs.set("page", String(parsedParams.page));
+
+  const [user, initialData] = await Promise.all([
+    getCurrentUser(),
+    serverFetch<PaginatedResponse<BloodRequest>>(
+      `/api/requests?${qs.toString()}`
+    ).catch(() => undefined),
+  ]);
+
   return (
     <>
       <PageHeader
-        eyebrow="Blood requests"
-        title="Emergency Blood Requests"
-        description="Browse and respond to active emergency blood requests across Bangladesh."
+        eyebrow="REQUESTS"
+        title="Blood requests"
         actions={
           <Link
             href="/requests/new"
@@ -18,11 +50,13 @@ export default async function RequestsPage() {
         }
       />
 
-      {/* TODO: Request list will be implemented in a future prompt */}
-      <div className="rounded-[6px] border border-line bg-surface-2 p-12 text-center">
-        <p className="font-sans text-sm text-fg-muted">
-          Blood request listings coming soon.
-        </p>
+      <div className="space-y-4">
+        <RequestFilters />
+        <RequestList
+          initialData={initialData}
+          initialParams={parsedParams}
+          currentUserId={user?.id ?? ""}
+        />
       </div>
     </>
   );

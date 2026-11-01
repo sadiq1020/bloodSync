@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, CaretUpDown } from "@phosphor-icons/react";
+import { Check, CaretUpDown, X } from "@phosphor-icons/react";
 import { BANGLADESH_DISTRICTS, type District } from "@/lib/constants/districts";
 import { cn } from "@/lib/utils";
 import {
@@ -20,13 +20,15 @@ import {
 
 export interface DistrictComboboxProps {
   value?: string;
-  onChange: (value: District) => void;
+  onChange: (value: District | undefined) => void;
   disabled?: boolean;
   error?: string;
   id?: string;
   aiFilled?: boolean;
   needsCheck?: boolean;
   hasAiFlash?: boolean;
+  /** When true, renders an X button to clear the selection. onChange called with undefined. */
+  clearable?: boolean;
 }
 
 export function DistrictCombobox({
@@ -38,6 +40,7 @@ export function DistrictCombobox({
   aiFilled,
   needsCheck,
   hasAiFlash,
+  clearable,
 }: DistrictComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -93,11 +96,25 @@ export function DistrictCombobox({
             !value && "text-fg-dim"
           )}
         >
-          <span className="truncate">{value || "Select your district..."}</span>
-          <CaretUpDown
-            className="size-4 shrink-0 text-fg-dim"
-            aria-hidden="true"
-          />
+          <span className="truncate flex-1">{value || "Select your district..."}</span>
+          {clearable && value ? (
+            <button
+              type="button"
+              aria-label="Clear district"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(undefined as unknown as District);
+              }}
+              className="shrink-0 text-fg-dim hover:text-fg"
+            >
+              <X className="size-3.5" aria-hidden="true" />
+            </button>
+          ) : (
+            <CaretUpDown
+              className="size-4 shrink-0 text-fg-dim"
+              aria-hidden="true"
+            />
+          )}
         </PopoverTrigger>
 
         <PopoverContent
