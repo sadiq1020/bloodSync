@@ -160,3 +160,21 @@ export interface ApiErrorResponse {
   errors?: ApiFieldError[];
   stack?: string;
 }
+
+export interface AiParsedFields {
+  patientName: string | null;
+  bloodGroup: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-" | null;
+  unitsNeeded: number | null;
+  hospital: string | null;
+  district: string | null;
+  area: string | null;
+  urgency: Urgency;
+  contactPhone: string | null;
+}
+
+export interface AiParseResponse {
+  fields: AiParsedFields;
+  missingFields: string[];
+  matchingDonorsCount: number | null;
+}
+

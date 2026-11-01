@@ -5,11 +5,14 @@ import { BLOOD_GROUPS, type BloodGroup } from "@/lib/constants/bloodGroups";
 import { formatBloodGroup } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-interface BloodGroupPickerProps {
+export interface BloodGroupPickerProps {
   value?: BloodGroup | string;
   onChange: (value: BloodGroup) => void;
   disabled?: boolean;
   error?: string;
+  aiFilled?: boolean;
+  needsCheck?: boolean;
+  hasAiFlash?: boolean;
 }
 
 export function BloodGroupPicker({
@@ -17,12 +20,38 @@ export function BloodGroupPicker({
   onChange,
   disabled,
   error,
+  aiFilled,
+  needsCheck,
+  hasAiFlash,
 }: BloodGroupPickerProps) {
   return (
-    <fieldset className="space-y-2">
+    <fieldset
+      className={cn(
+        "space-y-2 rounded-[6px] transition-colors p-1 -m-1",
+        hasAiFlash && "ai-flash rounded-[6px]"
+      )}
+    >
       <div className="flex items-baseline justify-between">
-        <legend className="font-mono text-xs font-medium uppercase tracking-wider text-fg-dim">
-          Blood Group <span className="text-blood">*</span>
+        <legend className="flex items-center gap-2 font-mono text-xs font-medium uppercase tracking-wider text-fg-dim">
+          <span>
+            Blood Group <span className="text-blood">*</span>
+          </span>
+          {aiFilled && (
+            <span
+              className="rounded-[3px] bg-blood-deep/40 px-1 py-0.5 font-mono text-[10px] font-bold tracking-tight text-blood-light"
+              title="Suggested by AI"
+            >
+              AI
+            </span>
+          )}
+          {needsCheck && (
+            <span
+              className="rounded-[3px] bg-plasma/20 px-1 py-0.5 font-mono text-[10px] font-bold tracking-tight text-plasma"
+              title="Please check this field"
+            >
+              CHECK
+            </span>
+          )}
         </legend>
         <span className="font-mono text-[11px] text-fg-dim">Required</span>
       </div>

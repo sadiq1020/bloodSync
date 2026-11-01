@@ -14,8 +14,7 @@ import {
 import { normalizeDigits } from "@/lib/normalize-digits";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/error";
-import { BloodGroupPicker } from "./BloodGroupPicker";
-import { DistrictCombobox } from "./DistrictCombobox";
+import { BloodGroupPicker, DistrictCombobox, PhoneField } from "@/components/features/shared";
 import { ENUM_TO_BLOOD_GROUP_MAP, type BloodGroup } from "@/lib/constants/bloodGroups";
 import type { District } from "@/lib/constants/districts";
 import type { MyDonorProfile } from "@/types";
@@ -243,44 +242,12 @@ export function DonorProfileForm({
       </div>
 
       {/* 4. Phone Input */}
-      <div className="space-y-1.5">
-        <div className="flex items-baseline justify-between">
-          <label
-            htmlFor="phone-input"
-            className="font-mono text-xs font-medium uppercase tracking-wider text-fg-dim"
-          >
-            Phone Number <span className="text-blood">*</span>
-          </label>
-          <span className="font-mono text-[11px] text-fg-dim">
-            01XXXXXXXXX or +8801XXXXXXXXX
-          </span>
-        </div>
-        <input
-          id="phone-input"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          {...register("phone")}
-          disabled={mutation.isPending}
-          placeholder="01XXXXXXXXX"
-          aria-describedby={errors.phone ? "phone-error" : undefined}
-          className={cn(
-            "flex h-12 w-full rounded-[6px] border bg-surface-2 px-3.5 font-sans text-sm text-fg placeholder:text-fg-dim transition-colors outline-none",
-            "border-line hover:border-line-strong",
-            "focus-visible:border-blood focus-visible:ring-1 focus-visible:ring-blood",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-            errors.phone && "border-blood focus-visible:ring-blood"
-          )}
-        />
-        <p className="font-sans text-xs text-fg-dim">
-          Bangla digits (০-৯) are automatically converted to standard numbers.
-        </p>
-        {errors.phone && (
-          <p id="phone-error" role="alert" className="font-sans text-xs text-blood-light">
-            {errors.phone.message}
-          </p>
-        )}
-      </div>
+      <PhoneField
+        id="phone-input"
+        {...register("phone")}
+        disabled={mutation.isPending}
+        error={errors.phone?.message}
+      />
 
       {/* 5. Last Donation Date (Optional) */}
       <div className="space-y-1.5">

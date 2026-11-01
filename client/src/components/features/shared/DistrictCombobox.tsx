@@ -18,12 +18,15 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
-interface DistrictComboboxProps {
+export interface DistrictComboboxProps {
   value?: string;
   onChange: (value: District) => void;
   disabled?: boolean;
   error?: string;
   id?: string;
+  aiFilled?: boolean;
+  needsCheck?: boolean;
+  hasAiFlash?: boolean;
 }
 
 export function DistrictCombobox({
@@ -32,17 +35,43 @@ export function DistrictCombobox({
   disabled,
   error,
   id = "district-combobox",
+  aiFilled,
+  needsCheck,
+  hasAiFlash,
 }: DistrictComboboxProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="space-y-1.5">
+    <div
+      className={cn(
+        "space-y-1.5 p-1 -m-1 rounded-[6px] transition-colors",
+        hasAiFlash && "ai-flash"
+      )}
+    >
       <div className="flex items-baseline justify-between">
         <label
           htmlFor={id}
-          className="font-mono text-xs font-medium uppercase tracking-wider text-fg-dim"
+          className="flex items-center gap-2 font-mono text-xs font-medium uppercase tracking-wider text-fg-dim"
         >
-          District <span className="text-blood">*</span>
+          <span>
+            District <span className="text-blood">*</span>
+          </span>
+          {aiFilled && (
+            <span
+              className="rounded-[3px] bg-blood-deep/40 px-1 py-0.5 font-mono text-[10px] font-bold tracking-tight text-blood-light"
+              title="Suggested by AI"
+            >
+              AI
+            </span>
+          )}
+          {needsCheck && (
+            <span
+              className="rounded-[3px] bg-plasma/20 px-1 py-0.5 font-mono text-[10px] font-bold tracking-tight text-plasma"
+              title="Please check this field"
+            >
+              CHECK
+            </span>
+          )}
         </label>
         <span className="font-mono text-[11px] text-fg-dim">64 Districts</span>
       </div>
