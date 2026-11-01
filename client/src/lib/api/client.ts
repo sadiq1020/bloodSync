@@ -1,7 +1,8 @@
 import { ApiError } from "./error";
 
-interface ApiFetchOptions extends Omit<RequestInit, "headers"> {
+interface ApiFetchOptions extends Omit<RequestInit, "headers" | "body"> {
   headers?: Record<string, string> | Headers;
+  body?: unknown;
 }
 
 /**
@@ -34,7 +35,7 @@ export async function apiFetch<T>(
     ...options,
     credentials: "include",
     headers,
-    body,
+    body: body as BodyInit | null | undefined,
   });
 
   if (response.status === 204) {

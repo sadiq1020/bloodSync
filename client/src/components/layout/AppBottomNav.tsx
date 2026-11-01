@@ -23,13 +23,7 @@ interface AppBottomNavProps {
   role: "USER" | "ADMIN";
 }
 
-const navItems = [
-  { href: "/requests", label: "Requests", Icon: Drop },
-  { href: "/donors", label: "Donors", Icon: MagnifyingGlass },
-  // Center slot is the "Request blood" action — rendered separately
-  { href: "/my/requests", label: "Activity", Icon: Heartbeat },
-  // "Me" tab is rendered separately (opens sheet)
-];
+
 
 /**
  * AppBottomNav (Client Component)
