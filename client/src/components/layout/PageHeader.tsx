@@ -54,3 +54,19 @@ export function PageHeader({
     </div>
   );
 }
+
+export function PageHeaderSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-4 pb-6 sm:flex-row sm:items-start sm:justify-between",
+        className
+      )}
+    >
+      <div className="space-y-2">
+        <div className="h-3 w-20 animate-pulse rounded bg-surface-2" />
+        <div className="h-8 w-48 animate-pulse rounded bg-surface-2" />
+      </div>
+    </div>
+  );
+}

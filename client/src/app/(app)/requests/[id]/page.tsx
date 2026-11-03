@@ -141,7 +141,11 @@ export default async function RequestDetailPage({ params }: PageProps) {
         />
 
         {/* Terminal status banner (FULFILLED, EXPIRED, CANCELLED) */}
-        <TerminalBanner status={request.status} />
+        <TerminalBanner
+          status={request.status}
+          requestId={request.id}
+          isOwner={isOwner}
+        />
 
         {/* ============================================================== */}
         {/* MOBILE STACKED LAYOUT (Hidden on lg and up)                     */}

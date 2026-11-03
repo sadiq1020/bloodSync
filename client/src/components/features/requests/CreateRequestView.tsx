@@ -15,6 +15,7 @@ import {
 import { AiPasteBox } from "./AiPasteBox";
 import { RequestForm } from "./RequestForm";
 import { RequestPreview } from "./RequestPreview";
+import { Info } from "@phosphor-icons/react";
 import type { AiParseResponse, BloodRequest } from "@/types";
 import type { BloodGroup } from "@/lib/constants/bloodGroups";
 import type { District } from "@/lib/constants/districts";
@@ -22,11 +23,15 @@ import type { District } from "@/lib/constants/districts";
 interface CreateRequestViewProps {
   userName?: string;
   donorPhone?: string;
+  initialValues?: Partial<RequestFormData>;
+  isCopied?: boolean;
 }
 
 export function CreateRequestView({
   userName = "",
   donorPhone = "",
+  initialValues,
+  isCopied = false,
 }: CreateRequestViewProps) {
   const router = useRouter();
 
@@ -45,17 +50,17 @@ export function CreateRequestView({
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestFormSchema),
     defaultValues: {
-      forSelf: false,
-      patientName: "",
-      bloodGroup: undefined,
-      unitsNeeded: 1,
-      hospital: "",
-      district: undefined,
-      area: "",
-      urgency: "NORMAL",
+      forSelf: initialValues?.forSelf ?? false,
+      patientName: initialValues?.patientName ?? "",
+      bloodGroup: initialValues?.bloodGroup ?? undefined,
+      unitsNeeded: initialValues?.unitsNeeded ?? 1,
+      hospital: initialValues?.hospital ?? "",
+      district: initialValues?.district ?? undefined,
+      area: initialValues?.area ?? "",
+      urgency: initialValues?.urgency ?? "NORMAL",
       neededBy: "",
-      contactPhone: donorPhone || "",
-      note: "",
+      contactPhone: initialValues?.contactPhone || donorPhone || "",
+      note: initialValues?.note ?? "",
     },
     mode: "onTouched",
   });
@@ -263,6 +268,13 @@ export function CreateRequestView({
           onUndo={handleUndoAi}
           canUndo={undoSnapshot !== null}
         />
+
+        {isCopied && (
+          <div className="flex items-center gap-2 rounded-[4px] border border-plasma/30 bg-plasma/10 px-3.5 py-2.5 font-mono text-xs text-plasma">
+            <Info className="h-4 w-4 shrink-0" weight="bold" />
+            <span>Copied from your earlier request. Set a new time.</span>
+          </div>
+        )}
 
         <RequestForm
           form={form}

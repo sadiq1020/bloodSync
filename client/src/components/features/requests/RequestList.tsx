@@ -6,13 +6,13 @@ import { useQueryStates } from "nuqs";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { m } from "motion/react";
 import {
-  ArrowLeft,
-  ArrowRight,
   ArrowClockwise,
   SpinnerGap,
 } from "@phosphor-icons/react";
 import { requestsParsers } from "@/lib/search-params/requests";
 import { RequestCard } from "./RequestCard";
+import { Pagination } from "@/components/features/shared/Pagination";
+import { ListErrorBanner } from "@/components/features/shared/ListErrorBanner";
 import { apiFetch } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/format";
@@ -215,18 +215,10 @@ export function RequestList({
 
       {/* Error banner (show over stale data when error occurs) */}
       {isError && (
-        <div className="flex items-center justify-between rounded-[6px] border border-blood/30 bg-blood-deep/20 px-4 py-3">
-          <p className="font-sans text-sm text-blood-light">
-            {(error as Error)?.message || "Failed to load requests."}
-          </p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="font-mono text-xs text-blood-light underline"
-          >
-            Try again
-          </button>
-        </div>
+        <ListErrorBanner
+          message={(error as Error)?.message || "Failed to load requests."}
+          onRetry={() => refetch()}
+        />
       )}
 
       {/* Cards grid */}
@@ -262,41 +254,13 @@ export function RequestList({
       )}
 
       {/* Pagination */}
-      {meta && meta.totalPages > 1 && (
-        <nav
-          aria-label="Requests pagination"
-          className="flex items-center justify-center gap-3 pt-2"
-        >
-          <button
-            type="button"
-            disabled={params.page <= 1}
-            onClick={() => setParams({ page: params.page - 1 })}
-            className={cn(
-              "flex min-h-[40px] items-center gap-1.5 rounded-[4px] border border-line px-4 font-sans text-sm transition-colors",
-              "hover:border-line-strong hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
-            )}
-          >
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            Previous
-          </button>
-
-          <span className="font-mono text-xs text-fg-muted">
-            Page {meta.page} of {meta.totalPages}
-          </span>
-
-          <button
-            type="button"
-            disabled={params.page >= totalPages}
-            onClick={() => setParams({ page: params.page + 1 })}
-            className={cn(
-              "flex min-h-[40px] items-center gap-1.5 rounded-[4px] border border-line px-4 font-sans text-sm transition-colors",
-              "hover:border-line-strong hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40"
-            )}
-          >
-            Next
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </button>
-        </nav>
+      {meta && (
+        <Pagination
+          page={params.page}
+          totalPages={totalPages}
+          onPageChange={(nextPage) => setParams({ page: nextPage })}
+          ariaLabel="Requests pagination"
+        />
       )}
     </div>
   );

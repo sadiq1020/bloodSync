@@ -8,8 +8,18 @@ import { cn } from "@/lib/utils";
 import type { BloodRequest } from "@/types/api";
 
 interface RequestCardProps {
-  request: BloodRequest & { requester?: { id: string; name: string } };
+  request: BloodRequest & {
+    requester?: { id: string; name: string };
+    donationCounts?: {
+      PENDING: number;
+      ACCEPTED: number;
+      COMPLETED: number;
+      CANCELLED: number;
+      total: number;
+    };
+  };
   currentUserId?: string;
+  footer?: React.ReactNode;
 }
 
 function getAccent(urgency: string): "blood" | "plasma" | "none" {
@@ -18,9 +28,12 @@ function getAccent(urgency: string): "blood" | "plasma" | "none" {
   return "none";
 }
 
-
 /** Pure presentational card — no hooks, renders anywhere (server or client). */
-export function RequestCard({ request, currentUserId }: RequestCardProps) {
+export function RequestCard({
+  request,
+  currentUserId,
+  footer,
+}: RequestCardProps) {
   const {
     id,
     requesterId,
@@ -44,6 +57,10 @@ export function RequestCard({ request, currentUserId }: RequestCardProps) {
   const neededByText = isOverdue
     ? "overdue"
     : `needed ${relativeNeeded}`;
+
+  const pendingVolunteers = request.donationCounts?.PENDING ?? 0;
+  const hasNewVolunteers =
+    pendingVolunteers > 0 && (status === "OPEN" || status === "MATCHED");
 
   const ariaLabel = `${displayBloodGroup} blood needed at ${hospital}, ${district}${urgency !== "NORMAL" ? `, ${urgency.toLowerCase()}` : ""}`;
 
@@ -109,6 +126,11 @@ export function RequestCard({ request, currentUserId }: RequestCardProps) {
                   YOURS
                 </span>
               )}
+              {hasNewVolunteers && (
+                <span className="rounded-[3px] bg-plasma/25 px-1 py-0.5 font-mono text-[10px] font-bold text-plasma uppercase tracking-wide select-none">
+                  {pendingVolunteers} NEW {pendingVolunteers === 1 ? "VOLUNTEER" : "VOLUNTEERS"}
+                </span>
+              )}
               {isNewCard && (
                 <span className="rounded-[3px] bg-plasma/20 px-1 py-0.5 font-mono text-[10px] font-bold text-plasma uppercase tracking-wide select-none">
                   NEW
@@ -118,6 +140,13 @@ export function RequestCard({ request, currentUserId }: RequestCardProps) {
           </div>
         </div>
       </Link>
+
+      {/* Optional card footer */}
+      {footer && (
+        <div className="border-t border-line/60 bg-surface-2/40 px-4 py-2.5">
+          {footer}
+        </div>
+      )}
     </SpecimenCard>
   );
 }
