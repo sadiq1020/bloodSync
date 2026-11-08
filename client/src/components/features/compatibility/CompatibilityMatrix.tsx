@@ -1,63 +1,61 @@
-"use client";
-
-import * as React from "react";
-import { Check, Minus } from "@phosphor-icons/react";
 import {
   BLOOD_GROUPS,
   canDonateTo,
-  type BloodGroup,
 } from "@/lib/constants/blood-compatibility";
 import { formatBloodGroup } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
-interface CompatibilityMatrixProps {
-  selectedGroup: BloodGroup;
-  onSelectGroup: (group: BloodGroup) => void;
-}
-
-export function CompatibilityMatrix({
-  selectedGroup,
-  onSelectGroup,
-}: CompatibilityMatrixProps) {
+/**
+ * CompatibilityMatrix (Server Component)
+ * Fully server-rendered semantic 8x8 table mapping red blood cell donor to recipient compatibility.
+ * Provides accessible headers, row/column scopes, screen-reader text, and sticky first column.
+ */
+export function CompatibilityMatrix() {
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="font-display text-lg font-semibold text-fg">
-            8×8 Red Blood Cell Matrix
-          </h3>
+          <h2 className="font-display text-lg font-semibold text-fg">
+            8 by 8 Compatibility Matrix
+          </h2>
           <p className="font-sans text-xs text-fg-muted">
-            Click any row, column header, or cell to highlight compatibility relationships.
+            Cross-reference red blood cell donor compatibility against recipient blood group.
           </p>
         </div>
         <div className="flex items-center gap-4 font-mono text-[11px] text-fg-dim">
           <span className="flex items-center gap-1.5">
-            <span className="flex size-4 items-center justify-center rounded-[3px] bg-blood-deep/40 text-blood-light">
-              <Check weight="bold" className="size-3" />
+            <span
+              aria-hidden="true"
+              className="flex size-4 items-center justify-center rounded-[2px] bg-blood-deep/40 font-mono text-[11px] font-bold text-blood-light"
+            >
+              +
             </span>
-            Compatible
+            <span>Can give</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="flex size-4 items-center justify-center rounded-[3px] bg-surface-2 text-fg-dim">
-              <Minus weight="bold" className="size-3" />
+            <span
+              aria-hidden="true"
+              className="flex size-4 items-center justify-center rounded-[2px] bg-surface-2 font-mono text-[11px] text-fg-dim"
+            >
+              &minus;
             </span>
-            Incompatible
+            <span>Cannot give</span>
           </span>
         </div>
       </div>
 
-      {/* Overflow wrapper for mobile scrolling */}
       <div className="relative overflow-x-auto rounded-[6px] border border-line bg-surface">
         <table
-          className="w-full border-collapse font-sans text-xs"
+          className="w-full min-w-[560px] border-collapse font-sans text-xs"
           aria-label="Red blood cell donor and recipient compatibility matrix"
         >
+          <caption className="sr-only">
+            Red blood cell compatibility by donor and recipient blood group
+          </caption>
           <thead>
-            {/* Top row: Recipients Header */}
-            <tr className="border-b border-line bg-surface-2/70 font-mono text-[11px]">
+            <tr className="border-b border-line bg-surface-2/60 font-mono text-[11px]">
               <th
                 scope="col"
-                className="p-3 text-left font-semibold text-fg-dim border-r border-line"
+                className="sticky left-0 z-20 border-r border-line bg-surface p-3 text-left font-semibold text-fg-dim"
               >
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase tracking-wider text-fg-dim">
@@ -68,96 +66,58 @@ export function CompatibilityMatrix({
                   </span>
                 </div>
               </th>
-              {BLOOD_GROUPS.map((recipient) => {
-                const isSelected = selectedGroup === recipient;
-                return (
-                  <th
-                    key={recipient}
-                    scope="col"
-                    onClick={() => onSelectGroup(recipient)}
-                    className={cn(
-                      "cursor-pointer p-2 text-center transition-colors hover:bg-surface-2 select-none",
-                      isSelected && "bg-blood-deep/30 text-blood-light font-bold"
-                    )}
-                    title={`Select recipient ${recipient}`}
-                  >
-                    <span className="font-mono text-xs font-semibold">
-                      {formatBloodGroup(recipient)}
-                    </span>
-                  </th>
-                );
-              })}
+              {BLOOD_GROUPS.map((recipient) => (
+                <th
+                  key={recipient}
+                  scope="col"
+                  data-recipient-col={recipient}
+                  className="p-2.5 text-center font-mono text-xs font-semibold text-fg transition-colors select-none"
+                >
+                  {formatBloodGroup(recipient)}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {BLOOD_GROUPS.map((donor) => {
-              const isDonorSelected = selectedGroup === donor;
-
-              return (
-                <tr
-                  key={donor}
-                  className={cn(
-                    "border-b border-line/60 transition-colors last:border-b-0",
-                    isDonorSelected ? "bg-blood-deep/15" : "hover:bg-surface-2/40"
-                  )}
+            {BLOOD_GROUPS.map((donor) => (
+              <tr
+                key={donor}
+                data-donor-row={donor}
+                className="border-b border-line/60 transition-colors last:border-b-0 hover:bg-surface-2/30"
+              >
+                <th
+                  scope="row"
+                  data-donor-header={donor}
+                  className="sticky left-0 z-10 border-r border-line bg-surface p-3 text-left font-mono text-xs font-semibold text-fg transition-colors select-none"
                 >
-                  {/* Row Header (Donor) */}
-                  <th
-                    scope="row"
-                    onClick={() => onSelectGroup(donor)}
-                    className={cn(
-                      "cursor-pointer border-r border-line p-2.5 text-left font-mono text-xs font-semibold transition-colors hover:bg-surface-2 select-none",
-                      isDonorSelected ? "bg-blood-deep/40 text-blood-light font-bold" : "text-fg"
-                    )}
-                    title={`Select donor ${donor}`}
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      {formatBloodGroup(donor)}
-                      {donor === "O-" && (
-                        <span className="rounded-[3px] bg-blood-deep/50 px-1 py-0.2 font-mono text-[9px] uppercase tracking-wider text-blood-light">
-                          Univ
+                  {formatBloodGroup(donor)}
+                </th>
+                {BLOOD_GROUPS.map((recipient) => {
+                  const compatible = canDonateTo(donor, recipient);
+
+                  return (
+                    <td
+                      key={`${donor}-${recipient}`}
+                      data-cell-donor={donor}
+                      data-cell-recipient={recipient}
+                      className="p-2 text-center transition-colors"
+                    >
+                      {compatible ? (
+                        <span className="inline-flex size-6 items-center justify-center font-mono text-sm font-bold text-blood-light">
+                          <span aria-hidden="true">+</span>
+                          <span className="sr-only">can give</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex size-6 items-center justify-center font-mono text-sm text-fg-dim/40">
+                          <span aria-hidden="true">&minus;</span>
+                          <span className="sr-only">cannot give</span>
                         </span>
                       )}
-                    </span>
-                  </th>
-
-                  {/* Matrix Cells */}
-                  {BLOOD_GROUPS.map((recipient) => {
-                    const compatible = canDonateTo(donor, recipient);
-                    const isCellSelected =
-                      selectedGroup === donor || selectedGroup === recipient;
-
-                    return (
-                      <td
-                        key={`${donor}-${recipient}`}
-                        onClick={() => onSelectGroup(donor)}
-                        className={cn(
-                          "cursor-pointer p-2 text-center transition-colors select-none",
-                          isCellSelected && "bg-blood-deep/10",
-                          selectedGroup === donor && selectedGroup === recipient && "bg-blood-deep/30"
-                        )}
-                        title={`Donor ${donor} to Recipient ${recipient}: ${
-                          compatible ? "Compatible" : "Incompatible"
-                        }`}
-                        aria-label={`Donor ${donor} to Recipient ${recipient}: ${
-                          compatible ? "Compatible" : "Incompatible"
-                        }`}
-                      >
-                        {compatible ? (
-                          <span className="inline-flex size-6 items-center justify-center rounded-[3px] bg-blood-deep/30 text-blood-light font-semibold">
-                            <Check weight="bold" className="size-3.5" />
-                          </span>
-                        ) : (
-                          <span className="inline-flex size-6 items-center justify-center text-fg-dim/40">
-                            <Minus className="size-3" />
-                          </span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
