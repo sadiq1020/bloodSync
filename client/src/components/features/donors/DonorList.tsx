@@ -6,6 +6,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { m } from "motion/react";
 import { ArrowClockwise, SpinnerGap } from "@phosphor-icons/react";
 import { donorsParsers } from "@/lib/search-params/donors";
+import { useDebouncedValue } from "@/hooks";
 import { DonorSearchCard } from "./DonorSearchCard";
 import { Pagination } from "@/components/features/shared/Pagination";
 import { ListErrorBanner } from "@/components/features/shared/ListErrorBanner";
@@ -44,10 +45,12 @@ export function DonorList({ initialData, initialParams }: DonorListProps) {
   const isInitialMount = React.useRef(true);
   const [initialMountTime] = React.useState(() => Date.now());
 
+  const debouncedArea = useDebouncedValue(params.area, 400);
+
   const activeParams = {
     bloodGroup: params.bloodGroup,
     district: params.district,
-    area: params.area,
+    area: debouncedArea,
     page: params.page,
   };
 

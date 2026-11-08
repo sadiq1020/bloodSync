@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { adminUsersParsers } from "@/lib/search-params/admin-users";
+import { useDebouncedValue } from "@/hooks";
 import { Pagination } from "@/components/features/shared/Pagination";
 import { ListErrorBanner } from "@/components/features/shared/ListErrorBanner";
 import {
@@ -73,15 +74,17 @@ export function AdminUsersList({
   );
   const [isActionPending, setIsActionPending] = React.useState(false);
 
+  const debouncedSearch = useDebouncedValue(params.search, 400);
+
   const queryParams = {
-    search: params.search,
+    search: debouncedSearch,
     role: params.role,
     status: params.status,
     page: params.page,
   };
 
   const isMatchesInitial =
-    params.search === initialParams.search &&
+    debouncedSearch === initialParams.search &&
     params.role === initialParams.role &&
     params.status === initialParams.status &&
     params.page === initialParams.page;
