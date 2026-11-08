@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/api/server";
 import { ApiError } from "@/lib/api/error";
 import { BlockedNotice } from "@/components/features/auth/BlockedNotice";
 import { AppShell } from "@/components/layout/AppShell";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AppLayout({
   children,

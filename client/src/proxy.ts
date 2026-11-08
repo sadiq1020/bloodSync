@@ -3,7 +3,7 @@ import { getSessionCookie } from "better-auth/cookies";
 
 const PROTECTED_PREFIXES = ["/requests", "/my", "/donor", "/donors", "/admin"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const sessionCookie = getSessionCookie(request);
 
@@ -42,3 +42,4 @@ export const config = {
     "/admin/:path*",
   ],
 };
+

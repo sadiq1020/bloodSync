@@ -121,14 +121,7 @@ export interface Donation {
   };
 }
 
-export interface AdminStats {
-  totalUsers: number;
-  totalDonors: number;
-  totalRequests: number;
-  totalDonations: number;
-  activeRequests: number;
-  completedDonations: number;
-}
+
 
 export interface PaginationMeta {
   total: number;
@@ -212,5 +205,66 @@ export interface RankedDonorResult {
   score: number;
   reasons: string[];
   donor: RankedDonorCandidate;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  blockedUsers: number;
+  totalDonors: number;
+  availableEligibleDonors: number;
+  requestsByStatus: {
+    OPEN: number;
+    MATCHED: number;
+    FULFILLED: number;
+    EXPIRED: number;
+    CANCELLED: number;
+  };
+  donationsCompleted: number;
+  donorsByBloodGroup: Record<string, number>;
+  topDistricts: Array<{
+    district: string;
+    count: number;
+  }>;
+}
+
+export interface AdminUserItem {
+  id: string;
+  name: string;
+  email: string;
+  role: "USER" | "ADMIN";
+  isBlocked: boolean;
+  createdAt: string;
+  hasDonorProfile: boolean;
+}
+
+export interface AdminRequestItem {
+  id: string;
+  requesterId: string;
+  patientName: string;
+  bloodGroup: BloodGroupEnum;
+  unitsNeeded: number;
+  hospital: string;
+  district: string;
+  area: string;
+  urgency: Urgency;
+  neededBy: string;
+  contactPhone?: string | null;
+  note: string | null;
+  forSelf: boolean;
+  status: RequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  requester: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  donationCounts: {
+    PENDING: number;
+    ACCEPTED: number;
+    COMPLETED: number;
+    CANCELLED: number;
+    total: number;
+  };
 }
 

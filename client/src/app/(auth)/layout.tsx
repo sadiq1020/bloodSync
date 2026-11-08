@@ -1,8 +1,16 @@
 import * as React from "react";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/api/server";
 import { Logo } from "@/components/brand/Logo";
 import { PulseLine } from "@/components/brand/PulseLine";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AuthLayout({
   children,

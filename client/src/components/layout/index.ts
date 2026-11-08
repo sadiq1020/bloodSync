@@ -8,3 +8,4 @@ export * from "./NavLinks";
 export * from "./UserMenu";
 export * from "./AdminNav";
 export * from "./PageHeader";
+export * from "./ErrorState";

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useQueryStates } from "nuqs";
+import { useQueryStates, debounce } from "nuqs";
 import { X } from "@phosphor-icons/react";
 import { donorsParsers } from "@/lib/search-params/donors";
 import { BloodGroupPicker } from "@/components/features/shared/BloodGroupPicker";
@@ -12,25 +12,6 @@ import type { District } from "@/lib/constants/districts";
 
 export function DonorFilters() {
   const [params, setParams] = useQueryStates(donorsParsers, { shallow: true });
-
-  const [prevArea, setPrevArea] = React.useState(params.area);
-  const [areaInput, setAreaInput] = React.useState(params.area ?? "");
-
-  // Sync from URL (e.g. on back navigation) during render
-  if (params.area !== prevArea) {
-    setPrevArea(params.area);
-    setAreaInput(params.area ?? "");
-  }
-
-  // Debounce area → URL by 400 ms
-  React.useEffect(() => {
-    const id = setTimeout(() => {
-      const trimmed = areaInput.trim();
-      setParams({ area: trimmed || null, page: 1 });
-    }, 400);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areaInput]);
 
   const hasFilters =
     !!params.bloodGroup || !!params.district || !!params.area;
@@ -75,20 +56,25 @@ export function DonorFilters() {
             <input
               id="donor-filter-area"
               type="text"
-              value={areaInput}
-              onChange={(e) => setAreaInput(e.target.value)}
+              value={params.area ?? ""}
+              onChange={(e) => {
+                const val = e.target.value;
+                setParams(
+                  { area: val || null, page: 1 },
+                  { limitUrlUpdates: debounce(400) }
+                );
+              }}
               placeholder="e.g. Mirpur"
               className={cn(
                 "flex h-10 w-full rounded-[6px] border bg-surface-2 px-3.5 pr-8 font-sans text-sm text-fg placeholder:text-fg-dim transition-colors outline-none",
                 "border-line hover:border-line-strong focus-visible:border-blood focus-visible:ring-1 focus-visible:ring-blood"
               )}
             />
-            {areaInput && (
+            {params.area && (
               <button
                 type="button"
                 aria-label="Clear area filter"
                 onClick={() => {
-                  setAreaInput("");
                   setParams({ area: null, page: 1 });
                 }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-dim hover:text-fg"
