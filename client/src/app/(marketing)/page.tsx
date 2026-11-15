@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: "BloodSync | Find blood donors in Bangladesh",
   description:
     "Targeted blood donation matching across 64 districts in Bangladesh. Connect urgent patient requests directly with eligible local donors.",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "BloodSync | Find blood donors in Bangladesh",
     description:

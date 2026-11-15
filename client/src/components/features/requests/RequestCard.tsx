@@ -3,7 +3,8 @@ import { SpecimenCard } from "@/components/brand/SpecimenCard";
 import { BloodTypeBadge } from "@/components/brand/BloodTypeBadge";
 import { UrgencyBadge } from "@/components/brand/UrgencyBadge";
 import { StatusBadge } from "@/components/brand/StatusBadge";
-import { formatBloodGroup, formatRelativeTime, formatRequestCode } from "@/lib/format";
+import { RelativeTime } from "@/components/ui/RelativeTime";
+import { formatBloodGroup, formatRequestCode, isRecent } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { BloodRequest } from "@/types/api";
 
@@ -52,11 +53,8 @@ export function RequestCard({
   const accent = getAccent(urgency);
   const isOwn = currentUserId ? currentUserId === requesterId : false;
   const isOverdue = status === "EXPIRED";
-  const relativeNeeded = formatRelativeTime(neededBy);
-  const isNewCard = status === "OPEN" && formatRelativeTime(createdAt).includes("minute");
-  const neededByText = isOverdue
-    ? "overdue"
-    : `needed ${relativeNeeded}`;
+  // Treat as "new" if the request was created within the last 60 minutes
+  const isNewCard = status === "OPEN" && isRecent(createdAt);
 
   const pendingVolunteers = request.donationCounts?.PENDING ?? 0;
   const hasNewVolunteers =
@@ -110,7 +108,14 @@ export function RequestCard({
                   isOverdue ? "text-fg-dim" : "text-fg-muted"
                 )}
               >
-                {neededByText}
+                {isOverdue ? (
+                  "overdue"
+                ) : (
+                  <>
+                    {"needed "}
+                    <RelativeTime date={neededBy} />
+                  </>
+                )}
               </span>
 
               {/* Units — no donation counts on public feed */}

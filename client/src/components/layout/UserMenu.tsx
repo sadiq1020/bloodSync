@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   User,
@@ -98,8 +99,14 @@ export function UserMenu({ name, email, role, image }: UserMenuProps) {
           className="flex size-8 shrink-0 items-center justify-center rounded-[4px] bg-blood-deep text-xs font-semibold text-fg overflow-hidden"
         >
           {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt="" className="size-full object-cover" />
+            <Image
+              src={image}
+              alt=""
+              width={32}
+              height={32}
+              unoptimized
+              className="size-full object-cover"
+            />
           ) : (
             <span className="font-mono text-[11px] font-bold tracking-tight">
               {initials}

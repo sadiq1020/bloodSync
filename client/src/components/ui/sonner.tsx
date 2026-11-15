@@ -7,6 +7,11 @@ export function Toaster() {
     <SonnerToaster
       theme="dark"
       className="toaster group"
+      // On mobile, the bottom navigation bar is 64px. Add offset so toasts
+      // appear above it. The safe-area-inset-bottom is handled via CSS env().
+      offset={{ bottom: 80 }}
+      // Tells screen readers to announce toasts as they appear
+      aria-live="polite"
       toastOptions={{
         classNames: {
           toast:

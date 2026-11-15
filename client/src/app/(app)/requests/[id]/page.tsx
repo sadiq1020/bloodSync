@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { serverFetch, getCurrentUser } from "@/lib/api/server";
+import dynamic from "next/dynamic";
 import { formatBloodGroup } from "@/lib/format";
 import { VialProgress } from "@/components/brand/VialProgress";
 import {
@@ -16,8 +17,22 @@ import {
   CreatedBanner,
   VolunteerPanel,
   CancelRequestButton,
-  SuggestedDonors,
 } from "@/components/features/requests/detail";
+
+const SuggestedDonors = dynamic(
+  () =>
+    import("@/components/features/requests/detail/SuggestedDonors").then(
+      (mod) => mod.SuggestedDonors
+    ),
+  {
+    loading: () => (
+      <div className="rounded-[6px] border border-line bg-surface p-5 sm:p-6 space-y-4">
+        <div className="h-6 w-36 rounded bg-surface-2 animate-pulse" />
+        <div className="h-20 w-full rounded bg-surface-2 animate-pulse" />
+      </div>
+    ),
+  }
+);
 import type {
   BloodRequest,
   MyDonorProfile,

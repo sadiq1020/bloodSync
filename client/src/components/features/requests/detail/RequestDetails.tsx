@@ -1,5 +1,6 @@
 import { PhoneCall } from "@phosphor-icons/react/dist/ssr";
-import { formatDateTime, formatRelativeTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
+import { RelativeTime } from "@/components/ui/RelativeTime";
 import { CopyPhoneButton } from "./CopyPhoneButton";
 import type { BloodRequest } from "@/types/api";
 
@@ -15,7 +16,6 @@ export function RequestDetails({ request }: RequestDetailsProps) {
   const { unitsNeeded, urgency, neededBy, contactPhone, note } = request;
 
   const absoluteNeededBy = formatDateTime(neededBy);
-  const relativeNeededBy = formatRelativeTime(neededBy);
 
   return (
     <div className="rounded-[6px] border border-line bg-surface p-5 sm:p-6">
@@ -56,7 +56,7 @@ export function RequestDetails({ request }: RequestDetailsProps) {
           <dd className="font-sans text-sm font-medium text-fg">
             {absoluteNeededBy}{" "}
             <span className="font-mono text-xs text-fg-dim">
-              ({relativeNeededBy})
+              (<RelativeTime date={neededBy} />)
             </span>
           </dd>
         </div>

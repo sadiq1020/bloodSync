@@ -1,10 +1,20 @@
 "use client";
 
+import * as React from "react";
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { MotionConfig, LazyMotion, domAnimation } from "motion/react";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+
+// Lazy dynamic import ensures devtools code and package are stripped from production bundles
+const Devtools =
+  process.env.NODE_ENV === "development"
+    ? React.lazy(() =>
+        import("@tanstack/react-query-devtools").then((m) => ({
+          default: m.ReactQueryDevtools,
+        }))
+      )
+    : null;
 
 function createQueryClient() {
   return new QueryClient({
@@ -40,8 +50,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             {children}
           </LazyMotion>
         </MotionConfig>
-        {process.env.NODE_ENV === "development" && (
-          <ReactQueryDevtools initialIsOpen={false} />
+        {Devtools && (
+          <React.Suspense fallback={null}>
+            <Devtools initialIsOpen={false} />
+          </React.Suspense>
         )}
       </QueryClientProvider>
     </NuqsAdapter>

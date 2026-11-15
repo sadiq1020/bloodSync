@@ -2,7 +2,8 @@ import { SpecimenCard } from "@/components/brand/SpecimenCard";
 import { BloodTypeBadge } from "@/components/brand/BloodTypeBadge";
 import { CooldownMeter } from "./CooldownMeter";
 import { AvailabilityToggle } from "./AvailabilityToggle";
-import { formatDate, formatRelativeTime } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { RelativeTime } from "@/components/ui/RelativeTime";
 import { ENUM_TO_BLOOD_GROUP_MAP } from "@/lib/constants/bloodGroups";
 import type { MyDonorProfile } from "@/types";
 import { cn } from "@/lib/utils";
@@ -28,16 +29,16 @@ export function DonorCard({ profile, userName, className }: DonorCardProps) {
       : profile.bloodGroup) || "O+";
 
   const nextDateFormatted = profile.nextEligibleDate
-    ? formatDate(
-        profile.nextEligibleDate,
-        { day: "numeric", month: "short", year: "numeric" },
-        "en-GB"
-      )
+    ? formatDate(profile.nextEligibleDate, {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
     : "";
 
-  const relativeTime = profile.nextEligibleDate
-    ? formatRelativeTime(profile.nextEligibleDate)
-    : "";
+  // No formatRelativeTime here — DonorCard is a server component, relative text
+  // is rendered by <RelativeTime> which handles server/client safely.
+
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -77,7 +78,8 @@ export function DonorCard({ profile, userName, className }: DonorCardProps) {
                   aria-hidden="true"
                 />
                 <span className="font-medium text-fg">
-                  Resting. Eligible again on {nextDateFormatted} ({relativeTime})
+                  Resting. Eligible again on {nextDateFormatted} (
+                  <RelativeTime date={profile.nextEligibleDate} />)
                 </span>
               </>
             )}

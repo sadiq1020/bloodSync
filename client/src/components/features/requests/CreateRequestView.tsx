@@ -8,17 +8,26 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/error";
+import dynamic from "next/dynamic";
 import {
   requestFormSchema,
   type RequestFormData,
 } from "@/lib/validation/request";
-import { AiPasteBox } from "./AiPasteBox";
 import { RequestForm } from "./RequestForm";
 import { RequestPreview } from "./RequestPreview";
 import { Info } from "@phosphor-icons/react";
 import type { AiParseResponse, BloodRequest } from "@/types";
 import type { BloodGroup } from "@/lib/constants/bloodGroups";
 import type { District } from "@/lib/constants/districts";
+
+const AiPasteBox = dynamic(
+  () => import("./AiPasteBox").then((mod) => mod.AiPasteBox),
+  {
+    loading: () => (
+      <div className="h-44 rounded-[6px] border border-line bg-surface animate-pulse" />
+    ),
+  }
+);
 
 interface CreateRequestViewProps {
   userName?: string;

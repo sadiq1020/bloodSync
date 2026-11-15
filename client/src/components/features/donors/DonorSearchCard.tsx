@@ -1,7 +1,7 @@
 import { SpecimenCard } from "@/components/brand/SpecimenCard";
 import { BloodTypeBadge } from "@/components/brand/BloodTypeBadge";
+import { RelativeTime } from "@/components/ui/RelativeTime";
 import { cn } from "@/lib/utils";
-import { formatRelativeTime } from "@/lib/format";
 import type { PublicDonor } from "@/types/api";
 
 interface DonorSearchCardProps {
@@ -50,9 +50,14 @@ export function DonorSearchCard({ donor }: DonorSearchCardProps) {
 
             {/* Last donated */}
             <span className={cn("font-mono text-[11px] text-fg-dim")}>
-              {lastDonatedAt
-                ? `Last donated ${formatRelativeTime(lastDonatedAt)}`
-                : "Has not donated before"}
+              {lastDonatedAt ? (
+                <>
+                  {"Last donated "}
+                  <RelativeTime date={lastDonatedAt} />
+                </>
+              ) : (
+                "Has not donated before"
+              )}
             </span>
           </div>
         </div>

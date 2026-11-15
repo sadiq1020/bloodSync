@@ -2,13 +2,25 @@
 
 import * as React from "react";
 import { useQueryStates } from "nuqs";
-import { SlidersHorizontal, X, FunnelSimple } from "@phosphor-icons/react";
+import { X } from "@phosphor-icons/react";
+import dynamic from "next/dynamic";
 import { requestsParsers } from "@/lib/search-params/requests";
 import { DistrictCombobox } from "@/components/features/shared/DistrictCombobox";
 import { BLOOD_GROUPS, type BloodGroup } from "@/lib/constants/bloodGroups";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import type { District } from "@/lib/constants/districts";
+
+const RequestMobileFilterSheet = dynamic(
+  () =>
+    import("./RequestMobileFilterSheet").then(
+      (m) => m.RequestMobileFilterSheet
+    ),
+  {
+    loading: () => (
+      <div className="h-10 w-24 rounded-[4px] border border-line bg-surface animate-pulse" />
+    ),
+  }
+);
 
 type Urgency = "NORMAL" | "URGENT" | "CRITICAL";
 type Status = "OPEN" | "MATCHED" | "FULFILLED" | "EXPIRED" | "CANCELLED";
@@ -246,37 +258,11 @@ export function RequestFilters() {
         </div>
       </div>
 
-      {/* Mobile: Sheet trigger button (hidden on desktop) */}
+      {/* Mobile: Sheet trigger button (hidden on desktop, lazy loaded) */}
       <div className="flex items-center gap-2 lg:hidden">
-        <Sheet>
-          <SheetTrigger
-            type="button"
-            className={cn(
-              "flex min-h-[40px] items-center gap-2 rounded-[4px] border border-line bg-surface px-4 font-sans text-sm text-fg transition-colors hover:border-line-strong",
-              count > 0 && "border-blood"
-            )}
-          >
-            <FunnelSimple className="size-4" aria-hidden="true" />
-            Filters
-            {count > 0 && (
-              <span className="rounded-full bg-blood px-1.5 py-0.5 font-mono text-[10px] font-bold text-fg">
-                {count}
-              </span>
-            )}
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-[90svh] overflow-y-auto">
-            <SheetHeader className="mb-4">
-              <SheetTitle className="font-mono text-xs uppercase tracking-widest text-fg-dim">
-                <SlidersHorizontal className="mr-2 inline size-4" aria-hidden="true" />
-                Filters
-              </SheetTitle>
-            </SheetHeader>
-            <FilterBody />
-            <div className="mt-6">
-              <ClearFiltersButton />
-            </div>
-          </SheetContent>
-        </Sheet>
+        <RequestMobileFilterSheet count={count} clearButton={<ClearFiltersButton />}>
+          <FilterBody />
+        </RequestMobileFilterSheet>
         <ClearFiltersButton />
       </div>
     </>

@@ -1,4 +1,9 @@
-// Pure utility formatters using standard browser/Node Intl APIs (no external date libraries)
+// Pure utility formatters using standard browser/Node Intl APIs (no external date libraries).
+// All date/time values use timeZone: "Asia/Dhaka" and a fixed locale to prevent
+// server/client hydration mismatches (server renders in UTC; we pin the output).
+
+const DHAKA_TZ = "Asia/Dhaka";
+const DATE_LOCALE = "en-GB"; // day-first, unambiguous — matches Bangladeshi convention
 
 /**
  * Formats a blood group string for display using a typographic minus sign (U+2212)
@@ -26,10 +31,11 @@ export function formatBloodGroup(group: string | null | undefined): string {
 
 /**
  * Formats a relative timestamp (e.g. '2 hours ago', 'in 3 days') using Intl.RelativeTimeFormat.
+ * NOTE: This produces time-relative text that changes every render — call it only
+ * inside a client component (e.g. <RelativeTime>) to avoid hydration mismatches.
  */
 export function formatRelativeTime(
-  dateInput: Date | string | number | null | undefined,
-  locale: string = "en"
+  dateInput: Date | string | number | null | undefined
 ): string {
   if (!dateInput) return "";
 
@@ -39,7 +45,7 @@ export function formatRelativeTime(
   const now = Date.now();
   const diffInSeconds = Math.round((date.getTime() - now) / 1000);
 
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat(DATE_LOCALE, { numeric: "auto" });
   const absSeconds = Math.abs(diffInSeconds);
 
   if (absSeconds < 60) {
@@ -76,12 +82,12 @@ export function formatRelativeTime(
 }
 
 /**
- * Formats a calendar date using Intl.DateTimeFormat without external date libraries.
+ * Formats a calendar date using Intl.DateTimeFormat.
+ * Uses timeZone "Asia/Dhaka" and a fixed locale so server and client output match.
  */
 export function formatDate(
   dateInput: Date | string | number | null | undefined,
-  options?: Intl.DateTimeFormatOptions,
-  locale: string = "en-US"
+  options?: Intl.DateTimeFormatOptions
 ): string {
   if (!dateInput) return "";
 
@@ -92,10 +98,14 @@ export function formatDate(
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: DHAKA_TZ,
     ...options,
+    // Always enforce the timezone; callers can override other options but not the timezone
   };
+  // Ensure timeZone is not overridden by spread options above
+  defaultOptions.timeZone = DHAKA_TZ;
 
-  return new Intl.DateTimeFormat(locale, defaultOptions).format(date);
+  return new Intl.DateTimeFormat(DATE_LOCALE, defaultOptions).format(date);
 }
 
 /**
@@ -112,20 +122,46 @@ export function formatRequestCode(id: string | null | undefined): string {
 }
 
 /**
- * Formats a calendar date and time (e.g. 'Nov 1, 2026, 4:30 PM') using standard Intl APIs.
+ * Formats a calendar date and time (e.g. '1 Nov 2026, 4:30 pm') using standard Intl APIs.
+ * Uses timeZone "Asia/Dhaka" and a fixed locale so server and client output match.
  */
 export function formatDateTime(
-  dateInput: Date | string | number | null | undefined,
-  locale: string = "en-US"
+  dateInput: Date | string | number | null | undefined
 ): string {
   if (!dateInput) return "";
   const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
   if (isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat(locale, {
+  return new Intl.DateTimeFormat(DATE_LOCALE, {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: DHAKA_TZ,
   }).format(date);
+}
+
+/**
+ * Formats a date as an ISO-like absolute string safe for the <time dateTime> attribute.
+ */
+export function formatDateTimeISO(
+  dateInput: Date | string | number | null | undefined
+): string {
+  if (!dateInput) return "";
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(date.getTime())) return "";
+  return date.toISOString();
+}
+
+/**
+ * Checks if a given timestamp occurred within the last `maxAgeMs` milliseconds (default 1 hour).
+ */
+export function isRecent(
+  dateInput: Date | string | number | null | undefined,
+  maxAgeMs = 60 * 60 * 1000
+): boolean {
+  if (!dateInput) return false;
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(date.getTime())) return false;
+  return date.getTime() > Date.now() - maxAgeMs;
 }
