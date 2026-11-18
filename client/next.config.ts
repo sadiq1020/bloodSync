@@ -29,7 +29,6 @@ const nextConfig: NextConfig = {
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
       },
     },
   },
@@ -37,6 +36,7 @@ const nextConfig: NextConfig = {
   // Tree-shake large icon and animation packages in the client bundle
   experimental: {
     optimizePackageImports: ["@phosphor-icons/react", "motion"],
+    agentUpgrade: "security",
   },
 
   async headers() {
