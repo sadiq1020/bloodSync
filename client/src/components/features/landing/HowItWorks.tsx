@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { m, useScroll, useTransform, useReducedMotion, LazyMotion, domAnimation } from "motion/react";
+import { m, useScroll, useTransform, useReducedMotion } from "motion/react";
 import { Reveal } from "@/components/motion/Reveal";
 
 const steps = [
@@ -68,27 +68,25 @@ export function HowItWorks() {
 
         {/* Timeline wrapper */}
         <div className="relative mt-16 max-w-4xl pl-2 sm:pl-4">
-          <LazyMotion features={domAnimation}>
-            {/* Background static hairline */}
-            <div
-              className="absolute left-[40px] sm:left-[56px] top-6 bottom-10 w-[1px] bg-line z-0"
+          {/* Background static hairline */}
+          <div
+            className="absolute left-[40px] sm:left-[56px] top-6 bottom-10 w-[1px] bg-line z-0"
+            aria-hidden="true"
+          />
+
+          {/* Active drawing line */}
+          {!shouldReduceMotion ? (
+            <m.div
+              style={{ scaleY, transformOrigin: "top" }}
+              className="absolute left-[40px] sm:left-[56px] top-6 bottom-10 w-[1px] bg-blood z-0"
               aria-hidden="true"
             />
-
-            {/* Active drawing line */}
-            {!shouldReduceMotion ? (
-              <m.div
-                style={{ scaleY, transformOrigin: "top" }}
-                className="absolute left-[40px] sm:left-[56px] top-6 bottom-10 w-[1px] bg-blood z-0"
-                aria-hidden="true"
-              />
-            ) : (
-              <div
-                className="absolute left-[40px] sm:left-[56px] top-6 bottom-10 w-[1px] bg-blood z-0"
-                aria-hidden="true"
-              />
-            )}
-          </LazyMotion>
+          ) : (
+            <div
+              className="absolute left-[40px] sm:left-[56px] top-6 bottom-10 w-[1px] bg-blood z-0"
+              aria-hidden="true"
+            />
+          )}
 
           {/* Steps List */}
           <div className="flex flex-col gap-12 sm:gap-16">

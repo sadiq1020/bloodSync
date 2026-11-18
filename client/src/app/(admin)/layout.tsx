@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api/error";
 import { BlockedNotice } from "@/components/features/auth/BlockedNotice";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminNav } from "@/components/layout/AdminNav";
+import { QueryProvider } from "@/providers/QueryProvider";
 
 export const metadata: Metadata = {
   robots: {
@@ -24,7 +25,11 @@ export default async function AdminLayout({
     user = await getCurrentUser();
   } catch (err) {
     if (err instanceof ApiError && err.status === 403) {
-      return <BlockedNotice />;
+      return (
+        <QueryProvider>
+          <BlockedNotice />
+        </QueryProvider>
+      );
     }
     throw err;
   }
@@ -40,17 +45,19 @@ export default async function AdminLayout({
   }
 
   return (
-    <AppShell
-      user={{
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        image: user.image,
-      }}
-      subheader={<AdminNav />}
-    >
-      {children}
-    </AppShell>
+    <QueryProvider>
+      <AppShell
+        user={{
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          image: user.image,
+        }}
+        subheader={<AdminNav />}
+      >
+        {children}
+      </AppShell>
+    </QueryProvider>
   );
 }

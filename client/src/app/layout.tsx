@@ -7,7 +7,7 @@ import {
 } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import { Providers } from "@/providers";
+import { Providers } from "@/providers/providers";
 import { OfflineBanner } from "@/components/layout/OfflineBanner";
 import "./globals.css";
 
@@ -32,9 +32,10 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 const hindSiliguri = Hind_Siliguri({
   variable: "--font-hind-siliguri",
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   subsets: ["bengali"],
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

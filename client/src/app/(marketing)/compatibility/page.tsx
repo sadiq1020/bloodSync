@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/layout/PageHeader";
-import {
-  CompatibilityExplorer,
-  CompatibilityMatrix,
-} from "@/components/features/compatibility";
+import { CompatibilityExplorer } from "@/components/features/compatibility/CompatibilityExplorer";
+import { CompatibilityMatrix } from "@/components/features/compatibility/CompatibilityMatrix";
 
 export const metadata: Metadata = {
   title: "Blood group compatibility chart | BloodSync",

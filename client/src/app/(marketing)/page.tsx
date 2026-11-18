@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import {
-  Hero,
-  FactsStrip,
-  ProblemAi,
-  HowItWorks,
-  CompatibilityTeaser,
-  ClosingCta,
-} from "@/components/features/landing";
+import { Hero } from "@/components/features/landing/Hero";
+import { FactsStrip } from "@/components/features/landing/FactsStrip";
+import { ProblemAi } from "@/components/features/landing/ProblemAi";
+import { HowItWorks } from "@/components/features/landing/HowItWorks";
+import { CompatibilityTeaser } from "@/components/features/landing/CompatibilityTeaser";
+import { ClosingCta } from "@/components/features/landing/ClosingCta";
 
 export const metadata: Metadata = {
   title: "BloodSync | Find blood donors in Bangladesh",

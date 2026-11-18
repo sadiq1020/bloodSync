@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { m, LazyMotion, domAnimation } from "motion/react";
+import { m } from "motion/react";
 import { EASE, DURATION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -41,31 +41,30 @@ function useInView(threshold = 0.1): [React.RefObject<HTMLDivElement | null>, bo
 /**
  * Stagger (Client Component — needs framer-motion staggerChildren).
  * Container that staggers its StaggerItem children as they enter the viewport.
+ * Inherits root LazyMotion dynamic features and MotionConfig.
  */
 export function Stagger({ children, className, staggerMs = 60 }: StaggerProps) {
   const [ref, inView] = useInView(0.1);
   const staggerSeconds = staggerMs / 1000;
 
   return (
-    <LazyMotion features={domAnimation}>
-      <m.div
-        ref={ref}
-        className={cn(className)}
-        initial="initial"
-        animate={inView ? "animate" : "initial"}
-        variants={{
-          initial: {},
-          animate: {
-            transition: {
-              staggerChildren: staggerSeconds,
-              delayChildren: 0.02,
-            },
+    <m.div
+      ref={ref}
+      className={cn(className)}
+      initial="initial"
+      animate={inView ? "animate" : "initial"}
+      variants={{
+        initial: {},
+        animate: {
+          transition: {
+            staggerChildren: staggerSeconds,
+            delayChildren: 0.02,
           },
-        }}
-      >
-        {children}
-      </m.div>
-    </LazyMotion>
+        },
+      }}
+    >
+      {children}
+    </m.div>
   );
 }
 

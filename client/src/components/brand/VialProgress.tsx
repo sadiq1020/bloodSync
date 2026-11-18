@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { m, LazyMotion, domAnimation, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { EASE } from "@/lib/motion";
 
@@ -120,11 +120,10 @@ export function VialProgress({
       : `${clampedFilled} of ${clampedTotal} unit${clampedTotal !== 1 ? "s" : ""} donated`;
 
   return (
-    <LazyMotion features={domAnimation}>
-      <div
-        ref={containerRef}
-        className={cn("inline-flex flex-col items-center gap-2", className)}
-      >
+    <div
+      ref={containerRef}
+      className={cn("inline-flex flex-col items-center gap-2", className)}
+    >
         <svg
           width={vialW}
           height={vialH}
@@ -266,6 +265,5 @@ export function VialProgress({
           </span>
         )}
       </div>
-    </LazyMotion>
   );
 }

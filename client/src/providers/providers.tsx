@@ -1,61 +1,32 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MotionConfig, LazyMotion, domAnimation } from "motion/react";
+import { MotionConfig, LazyMotion } from "motion/react";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-// Lazy dynamic import ensures devtools code and package are stripped from production bundles
-const Devtools =
-  process.env.NODE_ENV === "development"
-    ? React.lazy(() =>
-        import("@tanstack/react-query-devtools").then((m) => ({
-          default: m.ReactQueryDevtools,
-        }))
-      )
-    : null;
+// Asynchronous feature loader splits domAnimation into a lazy chunk
+// so it is not in the initial bundle payload of public pages.
+const loadMotionFeatures = () =>
+  import("motion/react").then((res) => res.domAnimation);
 
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 30 * 1000, // 30 seconds
-        refetchOnWindowFocus: true,
-        retry: (failureCount, error) => {
-          // Never retry 4xx client errors
-          if (error && typeof error === "object" && "status" in error) {
-            const status = (error as { status: number }).status;
-            if (status >= 400 && status < 500) {
-              return false;
-            }
-          }
-          // Retry once for network or 5xx server errors
-          return failureCount < 1;
-        },
-      },
-    },
-  });
-}
-
+/**
+ * Root Providers
+ * Keeps only globally necessary wrappers:
+ * 1. NuqsAdapter (URL query state)
+ * 2. MotionConfig (prefers-reduced-motion user override)
+ * 3. LazyMotion (asynchronous dynamic feature loader)
+ *
+ * QueryClientProvider is scoped specifically to (app) and (admin) layouts
+ * to keep public static pages lightweight.
+ */
 export function Providers({ children }: { children: React.ReactNode }) {
-  // useState ensures each client session receives its own QueryClient instance
-  const [queryClient] = useState(() => createQueryClient());
-
   return (
     <NuqsAdapter>
-      <QueryClientProvider client={queryClient}>
-        <MotionConfig reducedMotion="user">
-          <LazyMotion features={domAnimation} strict>
-            {children}
-          </LazyMotion>
-        </MotionConfig>
-        {Devtools && (
-          <React.Suspense fallback={null}>
-            <Devtools initialIsOpen={false} />
-          </React.Suspense>
-        )}
-      </QueryClientProvider>
+      <MotionConfig reducedMotion="user">
+        <LazyMotion features={loadMotionFeatures} strict>
+          {children}
+        </LazyMotion>
+      </MotionConfig>
     </NuqsAdapter>
   );
 }

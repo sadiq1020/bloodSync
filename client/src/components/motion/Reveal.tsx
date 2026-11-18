@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { m, LazyMotion, domAnimation } from "motion/react";
+import { m } from "motion/react";
 import { EASE, DURATION } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ export interface RevealProps {
 /**
  * Reveal (Client Component — needs IntersectionObserver + framer-motion).
  * Fades and lifts children up by 16px when they enter the viewport (once).
- * Respects prefers-reduced-motion via the MotionConfig in the root providers.
+ * Inherits root LazyMotion dynamic features and MotionConfig prefers-reduced-motion.
  */
 export function Reveal({
   children,
@@ -67,20 +67,18 @@ export function Reveal({
       : m.div;
 
   return (
-    <LazyMotion features={domAnimation}>
-      <MotionComponent
-        ref={ref}
-        className={cn(className)}
-        initial={{ opacity: 0, y: 16 }}
-        animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
-        transition={{
-          duration: DURATION.base,
-          ease: EASE as [number, number, number, number],
-          delay,
-        }}
-      >
-        {children}
-      </MotionComponent>
-    </LazyMotion>
+    <MotionComponent
+      ref={ref}
+      className={cn(className)}
+      initial={{ opacity: 0, y: 16 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+      transition={{
+        duration: DURATION.base,
+        ease: EASE as [number, number, number, number],
+        delay,
+      }}
+    >
+      {children}
+    </MotionComponent>
   );
 }
