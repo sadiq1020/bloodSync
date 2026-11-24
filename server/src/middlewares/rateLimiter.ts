@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 // General API rate limiter (100 requests per 15 minutes window)
 export const generalLimiter = rateLimit({
@@ -19,7 +19,7 @@ export const aiLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 10,
   keyGenerator: (req) => {
-    return req.user?.id || req.ip || "anonymous";
+    return req.user?.id || (req.ip ? ipKeyGenerator(req.ip) : "anonymous");
   },
   standardHeaders: true,
   legacyHeaders: false,
