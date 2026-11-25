@@ -19,6 +19,11 @@ import { adminRouter } from "./modules/admin/admin.route.js";
 
 const app = express();
 
+// Trust reverse proxy (Vercel rewrite -> Render) in production
+if (env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // Secure HTTP response headers
 app.use(helmet());
 

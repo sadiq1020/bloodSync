@@ -32,12 +32,12 @@ export const auth = betterAuth({
     },
   },
   advanced: {
-    // Cross-site cookie configuration for production multi-domain hosting
+    // Enable secure cookies in production with default SameSite=Lax (safe for frontend reverse proxy)
+    useSecureCookies: env.NODE_ENV === "production",
     defaultCookieAttributes:
       env.NODE_ENV === "production"
         ? {
             secure: true,
-            sameSite: "none",
           }
         : undefined,
   },

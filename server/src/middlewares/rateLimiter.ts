@@ -1,9 +1,10 @@
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
-// General API rate limiter (100 requests per 15 minutes window)
+// General API rate limiter (600 requests per 15 minutes window)
+// Generous limit to accommodate proxied traffic from Vercel -> Render
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 600,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
