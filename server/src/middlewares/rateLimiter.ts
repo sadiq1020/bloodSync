@@ -5,6 +5,7 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 600,
+  skip: (req) => req.path === "/ping" || req.originalUrl?.startsWith("/api/ping"),
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {

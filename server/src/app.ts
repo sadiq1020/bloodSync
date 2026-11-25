@@ -10,6 +10,7 @@ import { generalLimiter } from "./middlewares/rateLimiter.js";
 import { notFound } from "./middlewares/notFound.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { healthRouter } from "./modules/health/health.route.js";
+import { ping } from "./modules/health/health.controller.js";
 import { userRouter } from "./modules/user/user.route.js";
 import { donorRouter } from "./modules/donor/donor.route.js";
 import { requestRouter } from "./modules/request/request.route.js";
@@ -35,6 +36,9 @@ app.use(
   })
 );
 
+// GET /api/ping - Instant health/ping check for uptime monitors (no DB query, no auth, no logging, no rate limiting)
+app.get("/api/ping", ping);
+
 // Global rate limiting
 app.use(generalLimiter);
 
@@ -45,7 +49,7 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// HTTP request logging
+// HTTP request logging (ignore /api/ping to avoid noisy log spam from uptime checkers)
 const logger = pino({
   level: env.NODE_ENV === "production" ? "info" : "debug",
   ...(env.NODE_ENV !== "production"
@@ -57,7 +61,14 @@ const logger = pino({
       }
     : {}),
 });
-app.use(pinoHttp({ logger }));
+app.use(
+  pinoHttp({
+    logger,
+    autoLogging: {
+      ignore: (req) => req.url === "/api/ping" || req.url?.startsWith("/api/ping?"),
+    },
+  })
+);
 
 // API routes
 app.use("/api", healthRouter);
