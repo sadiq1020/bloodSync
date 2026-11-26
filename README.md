@@ -1,412 +1,646 @@
 # BloodSync
 
-Emergency blood donor and request matching platform connecting blood seekers with eligible, compatible donors rapidly and safely.
+A web application for coordinating blood donation requests in Bangladesh.
+Requesters post blood needs; registered donors with compatible blood groups volunteer to donate.
+An AI assistant can read a WhatsApp or SMS message and prefill the request form.
 
-- Frontend: [Live Frontend (Placeholder)](https://bloodsync-frontend.placeholder.com)
-- Backend API: [Live API (Placeholder)](https://bloodsync-backend.placeholder.com)
-- Repository: [GitHub Repository (Placeholder)](https://github.com/placeholder/bloodSync)
-
----
-
-## 1. The Problem and the Solution
-
-In emergencies, finding compatible blood donors typically relies on unstructured posts across social media groups and messaging apps. This results in critical delays, repeated outreach to ineligible donors, and difficulty assessing geographic proximity.
-
-BloodSync provides a centralized platform that manages verified blood requests, enforces strict 90-day recovery intervals for donor eligibility, matches donors via a deterministic 8-group compatibility matrix, ranks candidates by district proximity, and extracts structured request data from emergency text messages using artificial intelligence.
+Live frontend: `https://blood-sync-ten.vercel.app/`
+Live API: `https://bloodsync-an1h.onrender.com/api/health`
+Repository: `https://github.com/sadiq1020/bloodSync`
 
 ---
 
-## 2. Features
+## Table of contents
 
-- Unified User Model: A single account acts as a blood requester and can toggle on an active donor profile without managing separate accounts.
-- Donor Eligibility Gap: Automated enforcement of the 90-day minimum recovery interval between blood donations.
-- Deterministic Compatibility Matrix: Evaluates ABO and Rh compatibility across all 8 blood groups (A+, A-, B+, B-, AB+, AB-, O+, O-).
-- Candidate Ranking Algorithm: Ranks compatible donors by location proximity (same district and area priority) and donation readiness.
-- Request Lifecycle Management: Tracks request states across OPEN, MATCHED, FULFILLED, EXPIRED, and CANCELLED.
-- Contact Privacy Guard: Sensitive donor and patient contact numbers are restricted from public feeds and revealed exclusively to matched, authorized participants.
-- AI-Powered Text Parser: Uses LLM structured inference (Gemini via OpenRouter) with strict Zod validation to convert messy emergency posts into structured request fields.
-- Admin Moderation Suite: User blocking with immediate session invalidation, administrative request closures, hard deletion, and database aggregate analytics.
+1. [Features](#1-features)
+2. [Architecture](#2-architecture)
+3. [Backend](#3-backend)
+4. [Frontend](#4-frontend)
+5. [Database](#5-database)
+6. [API reference](#6-api-reference)
+7. [AI assistant](#7-ai-assistant)
+8. [Setup](#8-setup)
+9. [Deployment](#9-deployment)
+10. [Security](#10-security)
+11. [Known limitations](#11-known-limitations)
+12. [AI evaluation](#12-ai-evaluation)
+13. [Performance](#13-performance)
+14. [Screenshots](#14-screenshots)
+15. [Demo accounts](#15-demo-accounts)
 
 ---
 
-## 3. User Roles and Workflows
+## 1. Features
 
-The platform operates on two system roles:
-- USER: Regular authenticated account. Users can post blood requests, search for donors, volunteer for open requests, or activate a donor profile.
-- ADMIN: Administrative account with platform moderation authority. Admins can block abusive users, close or delete invalid requests, and view aggregated system metrics.
+- Blood request feed filtered by blood group, district, and urgency
+- Donor search filtered by blood group, district, and area
+- Donor ranking for each request (compatible blood groups, same district, eligibility score)
+- Donation lifecycle: PENDING - ACCEPTED - COMPLETED or CANCELLED
+- AI message parser: paste a WhatsApp or SMS text to prefill the request form
+- Admin panel: user management, request list, block/unblock users
+- Role-based access control (USER / ADMIN); role cannot be set at signup
+- Session invalidation on block
 
-### Request Status Lifecycle
+---
 
-```mermaid
-stateDiagram-v2
-    [*] --> OPEN: Requester creates blood request
-    OPEN --> MATCHED: Accepted donations reach unitsNeeded
-    OPEN --> EXPIRED: Request passes neededBy timestamp
-    OPEN --> CANCELLED: Requester or Admin cancels request
-    MATCHED --> FULFILLED: Accepted donations marked COMPLETED
-    MATCHED --> CANCELLED: Requester or Admin cancels request
-    MATCHED --> EXPIRED: Request passes neededBy timestamp
-    FULFILLED --> [*]
-    EXPIRED --> [*]
-    CANCELLED --> [*]
+## 2. Architecture
+
+```
+Browser
+  |
+  v
+Vercel (Next.js frontend)
+  |  rewrites /api/* -> Render backend
+  v
+Render (Express API, Node.js)
+  |
+  v
+Neon (PostgreSQL, Prisma ORM)
+  |
+  +-- OpenRouter (AI model for text parsing)
 ```
 
-### Donation Status Lifecycle
+Traffic path: browser -> Vercel rewrite -> Render -> app.
+`trust proxy 1` is set in production so Express reads the real client IP from
+`X-Forwarded-For`.
 
-```mermaid
-stateDiagram-v2
-    [*] --> PENDING: Eligible and compatible donor volunteers
-    PENDING --> ACCEPTED: Request owner accepts volunteer
-    PENDING --> CANCELLED: Request cancelled or closed
-    ACCEPTED --> COMPLETED: Donation confirmed completed
-    ACCEPTED --> CANCELLED: Request cancelled or closed
-    COMPLETED --> [*]
-    CANCELLED --> [*]
+---
+
+## 3. Backend
+
+**Stack:** Node.js, Express, TypeScript, Prisma, Better Auth, Zod, Helmet, Pino, express-rate-limit
+
+**Folder structure**
+
 ```
-
----
-
-## 4. Tech Stack
-
-- Runtime: Node.js (v20+)
-- Framework: Express 5
-- Language: TypeScript
-- Database: PostgreSQL (Neon Serverless)
-- ORM: Prisma ORM
-- Authentication: Better Auth (session cookies, scrypt password hashing)
-- Validation: Zod
-- AI / LLM: OpenRouter API (Google Gemini 2.5 Flash / Minimax)
-- Security: Helmet, CORS, Express Rate Limit
-- Logging: Pino, Pino-Http
-- Testing: Vitest
-
----
-
-## 5. Architecture
-
-The backend follows a layered architectural pattern:
-- Route: Declares HTTP methods and mounts authentication and validation middleware.
-- Validation: Zod schemas validating request body, query parameters, and route parameters.
-- Controller: Handles HTTP request/response parsing, error delegation via catchAsync, and status codes.
-- Service: Executes database queries, Prisma transactions, and business logic.
-- Pure Libraries: Deterministic blood compatibility matching, donor scoring, and date-based eligibility calculations isolated from database operations.
-
-```text
 server/
-├── prisma/
-│   ├── schema.prisma           # Prisma database schema
-│   ├── seed.ts                 # Admin seed script
-│   └── seed-demo.ts            # Realistic demo dataset seed
-├── src/
-│   ├── app.ts                  # Express application setup and routing
-│   ├── server.ts               # Server bootstrap and graceful shutdown
-│   ├── config/                 # Environment variables, Prisma client, Better Auth
-│   ├── constants/              # Bangladesh districts (64) and blood groups
-│   ├── lib/                    # Compatibility matrix, donor ranking, eligibility
-│   ├── middlewares/            # Auth guards, role guards, error handlers, rate limiters
-│   ├── modules/
-│   │   ├── admin/              # Admin moderation, stats, user blocking
-│   │   ├── ai/                 # OpenRouter emergency request parser
-│   │   ├── donation/           # Volunteering, status progression, reviews
-│   │   ├── donor/              # Donor profile management and public search
-│   │   ├── health/             # Health check endpoint
-│   │   ├── request/            # Blood request creation, feed, cancellation
-│   │   └── user/               # Authenticated user profile retrieval
-│   ├── tests/                  # Unit and integration test suites
-│   └── utils/                  # AppError class and catchAsync wrapper
+  src/
+    app.ts                  # Express app: middleware, routes, error handler
+    server.ts               # HTTP listen entry point
+    config/
+      auth.ts               # Better Auth configuration
+      env.ts                # Zod-validated environment variables
+      openrouter.ts         # OpenAI-compatible client for OpenRouter
+      prisma.ts             # Prisma client singleton
+    constants/
+      bloodGroups.ts
+      districts.ts
+    lib/
+      bloodCompatibility.ts # Donor-to-patient compatibility rules
+      donorRanking.ts       # Scoring and ranking of candidate donors
+      eligibility.ts        # 90-day recovery period check
+    middlewares/
+      rateLimiter.ts        # General and AI-specific limiters
+      requireAuth.ts        # Session check middleware
+      requireRole.ts        # Admin role guard
+      validate.ts           # Zod request validation middleware
+    modules/
+      admin/                # Admin user and request management
+      ai/                   # Text parsing with OpenRouter
+      auth/                 # Signup, login helpers
+      donation/             # Volunteer, accept, complete, cancel
+      donor/                # Donor profile CRUD and search
+      health/               # /api/health (DB check) and /api/ping
+      request/              # Blood request CRUD, feed, ranked donors
+    scripts/
+      evaluate-ai.ts        # Offline accuracy benchmark
+      seed-admin.ts         # Admin account seed
+    tests/
+      ai-eval/
+        samples.json        # 20 hand-written evaluation samples
+      unit/                 # Jest unit tests (all test files)
+  prisma/
+    schema.prisma
+    seed-admin.ts
+    seed-demo.ts
+  dist/                     # Compiled output (git-ignored)
+  DEPLOYMENT.md
 ```
 
----
+**Modules**
 
-## 6. Database Design
-
-```mermaid
-erDiagram
-    User ||--o{ Session : "has"
-    User ||--o{ Account : "has"
-    User ||--o| DonorProfile : "maintains"
-    User ||--o{ BloodRequest : "creates"
-    User ||--o{ Donation : "volunteers"
-    BloodRequest ||--o{ Donation : "receives"
-
-    User {
-        string id PK
-        string name
-        string email UK
-        boolean emailVerified
-        Role role
-        boolean isBlocked
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Session {
-        string id PK
-        string token UK
-        string userId FK
-        datetime expiresAt
-        datetime createdAt
-    }
-
-    DonorProfile {
-        string id PK
-        string userId FK, UK
-        BloodGroup bloodGroup
-        string district
-        string area
-        string phone
-        boolean isAvailable
-        datetime lastDonatedAt
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    BloodRequest {
-        string id PK
-        string requesterId FK
-        string patientName
-        BloodGroup bloodGroup
-        int unitsNeeded
-        string hospital
-        string district
-        string area
-        Urgency urgency
-        datetime neededBy
-        string contactPhone
-        string note
-        boolean forSelf
-        RequestStatus status
-        datetime createdAt
-        datetime updatedAt
-    }
-
-    Donation {
-        string id PK
-        string requestId FK
-        string donorId FK
-        DonationStatus status
-        datetime createdAt
-        datetime updatedAt
-    }
-```
-
----
-
-## 7. API Overview
-
-| Method | Path | Authentication | Purpose |
-| :--- | :--- | :--- | :--- |
-| GET | `/api/health` | None | Server uptime and health status |
-| ALL | `/api/auth/*` | Better Auth | Registration, login, logout, and session handling |
-| GET | `/api/me` | USER / ADMIN | Retrieve authenticated user profile |
-| POST | `/api/donors/me` | USER | Create personal donor profile |
-| GET | `/api/donors/me` | USER | View personal donor profile with eligibility details |
-| PATCH | `/api/donors/me` | USER | Update personal donor profile |
-| GET | `/api/donors/search` | USER / ADMIN | Public search for eligible donors by blood group and district |
-| POST | `/api/requests` | USER | Create a new blood request |
-| GET | `/api/requests` | USER / ADMIN | Public feed of blood requests (omits patient phone) |
-| GET | `/api/requests/mine` | USER | List authenticated user requests with donation status counts |
-| GET | `/api/requests/:id` | USER / ADMIN | Detailed request view (reveals phone only to owner and volunteers) |
-| PATCH | `/api/requests/:id/cancel` | USER | Cancel open or matched request owned by user |
-| GET | `/api/requests/:id/donors` | USER / ADMIN | View top 20 ranked candidate donors for an open request |
-| POST | `/api/requests/:id/volunteer` | USER | Volunteer to donate for an open request |
-| GET | `/api/requests/:id/donations` | USER (Owner) | List volunteer donors for owned blood request |
-| GET | `/api/donations/mine` | USER | List user donation history and current statuses |
-| PATCH | `/api/donations/:id/accept` | USER (Owner) | Accept pending donation (auto-matches request when target reached) |
-| PATCH | `/api/donations/:id/complete` | USER (Owner/Donor) | Confirm donation completed (updates donor lastDonatedAt) |
-| PATCH | `/api/donations/:id/cancel` | USER (Owner/Donor) | Cancel pending or accepted donation |
-| POST | `/api/ai/parse-request` | USER / ADMIN | Parse unstructured text into structured request fields |
-| GET | `/api/admin/users` | ADMIN | List users with search, role, isBlocked, and donor profile flag |
-| PATCH | `/api/admin/users/:id/block` | ADMIN | Block/unblock user and immediately purge active sessions |
-| GET | `/api/admin/requests` | ADMIN | View all requests with donation status counts |
-| PATCH | `/api/admin/requests/:id/close` | ADMIN | Administratively cancel request and all associated active donations |
-| DELETE | `/api/admin/requests/:id` | ADMIN | Hard delete abusive request and associated donations |
-| GET | `/api/admin/stats` | ADMIN | System analytics aggregated via Prisma count and groupBy |
-
----
-
-## 8. AI Feature
-
-### Functionality
-The AI module extracts structured blood request data from free-form text messages. Users paste messages from social media or chat applications, and the system extracts key parameters required to initialize a blood request.
-
-### Input and Output
-- Input: Unstructured natural language string (`{ "text": "Need B+ blood urgently at Rajshahi Medical College" }`).
-- Output: Structured JSON payload with extracted parameters:
-  ```json
-  {
-    "bloodGroup": "B+",
-    "district": "Rajshahi",
-    "hospital": "Rajshahi Medical College",
-    "urgency": "URGENT",
-    "unitsNeeded": 1
-  }
-  ```
-
-### Validation and Security
-- Output validation is enforced using a strict Zod schema matching the 8 standard blood groups, 64 Bangladesh districts, and urgency levels.
-- System prompts are hardened to ignore prompt injection attempts embedded within user text.
-- Fallback parsing extracts JSON from markdown-wrapped LLM responses if code blocks are returned.
-
-### Limitations
-- The model may omit the district if the hospital name is not recognized or does not mention the geographical district.
-- Phone numbers and specific patient names in ambiguous contexts are omitted to prevent hallucination.
-
-### Evaluation Benchmark Results
-Directly reproduced from `docs/ai-evaluation.md`:
-
-#### Summary Metrics
-| Metric | Value |
+| Module | Responsibility |
 | :--- | :--- |
-| Total Test Samples | 20 |
-| Fully Correct Samples | 20 / 20 (100.0%) |
-| Overall Field Accuracy | 57 / 57 (100.0%) |
-| Average Response Time | 3622 ms |
+| auth | Email/password signup and login via Better Auth |
+| donor | Create, read, update donor profile; donor search |
+| request | Create blood requests; feed and personal list; ranked donor suggestions |
+| donation | Volunteer, accept, complete, cancel donations |
+| admin | List and block/unblock users; list all requests |
+| ai | Parse unstructured text into structured request fields |
+| health | `/api/health` (Prisma query + 503 on failure) and `/api/ping` (instant 200) |
 
-#### Per-Field Accuracy
-| Field | Tested Cases | Correct Matches | Accuracy |
+---
+
+## 4. Frontend
+
+**Stack:** Next.js 16.4.6, React 19.3.0, TypeScript, Tailwind CSS v4, shadcn/ui (base-ui/react, cmdk, lucide-react, Phosphor icons), TanStack Query v5, React Hook Form v7, Zod v4, nuqs v2, motion v14, Better Auth client v1.7, sonner v2
+
+**Route list**
+
+| Group | URL | Description |
+| :--- | :--- | :--- |
+| public (marketing) | `/` | Landing page |
+| public (marketing) | `/compatibility` | Blood group compatibility chart |
+| auth | `/login` | Login form + demo account buttons |
+| auth | `/register` | Registration form |
+| app (requires login) | `/requests` | Request feed with filters |
+| app (requires login) | `/requests/new` | New request form with AI paste assistant |
+| app (requires login) | `/requests/[id]` | Request detail, volunteer button, ranked donors |
+| app (requires login) | `/my/requests` | Personal request list |
+| app (requires login) | `/my/donations` | Personal donation history |
+| app (requires login) | `/donors` | Donor search |
+| app (requires login) | `/donor` | Donor profile management |
+| admin | `/admin` | Admin dashboard |
+| admin | `/admin/users` | User list with block/unblock |
+| admin | `/admin/requests` | All requests list |
+
+**Data pattern**
+
+Server components fetch the first page of data on the server for instant render.
+URL state (filters, page number) is managed with nuqs and survives browser navigation.
+TanStack Query handles mutations and cache invalidation; `router.refresh()` is called after
+mutations that affect server-rendered data.
+
+**API proxy**
+
+All `/api/*` requests from the browser are rewritten by Next.js to the Render backend URL
+(`BACKEND_URL` environment variable). This keeps API calls on the same origin as the frontend
+so session cookies are first-party and are sent automatically without `credentials: "include"`.
+
+**Design**
+
+Dark theme with Tailwind CSS v4. All interactive elements have visible focus rings.
+Animations use the motion library and respect the user's `prefers-reduced-motion` setting.
+Touch targets are at least 44 px.
+
+**Demo login buttons**
+
+When `NEXT_PUBLIC_DEMO_LOGIN=true`, a "Demo accounts" section is shown below the login form
+with three buttons: Requester, Donor, Admin. Clicking one signs in directly using
+`authClient.signIn.email` with the credentials from the corresponding `NEXT_PUBLIC_DEMO_*`
+environment variables. A pending state is shown on the button while signing in.
+Admin lands on `/admin`; the others on `/requests`, unless `?next` is set.
+
+**Client folder tree**
+
+```
+client/
+  src/
+    app/
+      (marketing)/          # Landing and compatibility pages
+      (auth)/               # Login and register
+      (app)/                # Authenticated app routes
+      (admin)/              # Admin-only routes
+      layout.tsx            # Root layout: TanStack Query provider, Toaster
+      globals.css
+    components/
+      ui/                   # Base UI primitives
+      forms/                # React Hook Form + Zod form components
+      ...                   # Feature-level components
+    lib/
+      auth-client.ts        # Better Auth browser client
+      api.ts                # Typed fetch wrappers
+      utils.ts
+    hooks/                  # Custom React hooks
+  next.config.ts            # Rewrite proxy, security headers, bundle analyzer
+  client/.env.example
+```
+
+---
+
+## 5. Database
+
+PostgreSQL hosted on Neon. Prisma is used for migrations, queries, and schema management.
+
+**Models**
+
+| Model | Key fields | Notes |
+| :--- | :--- | :--- |
+| User | id, name, email (unique), role (USER/ADMIN), isBlocked | Managed by Better Auth |
+| Session | id, token (unique), userId, expiresAt | Managed by Better Auth |
+| Account | id, accountId, providerId, userId | OAuth accounts (Better Auth) |
+| Verification | id, identifier, value, expiresAt | Used by Better Auth internally |
+| DonorProfile | id, userId (unique), bloodGroup, district, area, phone, isAvailable, lastDonatedAt | One per user |
+| BloodRequest | id, requesterId, patientName, bloodGroup, unitsNeeded, hospital, district, area, urgency, neededBy, contactPhone, note, forSelf, status | Defaults to OPEN |
+| Donation | id, requestId, donorId, status | Unique on (requestId, donorId) |
+
+**Enums**
+
+- BloodGroup: A+, A-, B+, B-, AB+, AB-, O+, O-
+- Role: USER, ADMIN
+- Urgency: NORMAL, URGENT, CRITICAL
+- RequestStatus: OPEN, MATCHED, FULFILLED, EXPIRED, CANCELLED
+- DonationStatus: PENDING, ACCEPTED, COMPLETED, CANCELLED
+
+**Indexes**
+
+| Model | Index |
+| :--- | :--- |
+| DonorProfile | `district`, `bloodGroup` |
+| BloodRequest | `district`, `bloodGroup`, `status` |
+| Donation | `status`; unique `(requestId, donorId)` |
+
+---
+
+## 6. API reference
+
+All endpoints are prefixed with `/api`. The browser talks to the Next.js frontend, which
+rewrites `/api/*` to the Render backend.
+
+### Auth (Better Auth built-in routes)
+
+| Method | Path | Description |
+| :--- | :--- | :--- |
+| POST | /api/auth/sign-up/email | Register (role defaults to USER, cannot be set by client) |
+| POST | /api/auth/sign-in/email | Login |
+| POST | /api/auth/sign-out | Logout |
+| GET | /api/auth/get-session | Current session |
+
+Better Auth applies its own built-in rate limiting to auth endpoints.
+
+### Health
+
+| Method | Path | Auth | Description |
 | :--- | :--- | :--- | :--- |
-| bloodGroup | 20 | 20 | 100.0% |
-| district | 20 | 20 | 100.0% |
-| urgency | 17 | 17 | 100.0% |
+| GET | /api/ping | None | Returns `{ "success": true }` immediately. No DB, no auth, no logging. Skips the general rate limiter. |
+| GET | /api/health | None | Runs `SELECT 1` via Prisma. Returns 200 `{ "status": "ok" }` or 503 `{ "status": "error", "message": "..." }` |
 
-#### Failed Cases Analysis
-All evaluation samples passed with 100% precision.
+### Donors
+
+| Method | Path | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| POST | /api/donors | USER | Create donor profile |
+| GET | /api/donors/me | USER | Get own donor profile (includes phone) |
+| PATCH | /api/donors/me | USER | Update donor profile |
+| GET | /api/donors/search | USER | Search available, eligible donors. Never returns phone or email. Filters: bloodGroup, district, area, page, limit |
+
+### Blood requests
+
+| Method | Path | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| POST | /api/requests | USER | Create a blood request |
+| GET | /api/requests | USER | Feed: paginated list ordered by urgency then neededBy. Omits contactPhone. |
+| GET | /api/requests/mine | USER | Own requests with donation counts |
+| GET | /api/requests/:id | USER | Request detail. contactPhone revealed only to owner, admin, or donors with ACCEPTED/COMPLETED status. |
+| PATCH | /api/requests/:id/cancel | USER (owner only) | Cancel OPEN or MATCHED request; cancels pending and accepted donations |
+| GET | /api/requests/:id/donors | USER (owner or admin) | Top 20 ranked candidate donors for this request. Returns donor phone. |
+| GET | /api/requests/:id/donations | USER (owner or admin) | All volunteers for this request with donor details and phone |
+
+### Donations
+
+| Method | Path | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| POST | /api/requests/:id/volunteer | USER | Volunteer to donate. Requires donor profile, eligibility, compatibility. One volunteer entry per (request, donor). |
+| GET | /api/donations/mine | USER | Own donation history |
+| PATCH | /api/donations/:id/accept | USER (request owner) | Accept a PENDING donation. If accepted+completed count >= unitsNeeded, marks request MATCHED. |
+| PATCH | /api/donations/:id/complete | USER (request owner) | Mark ACCEPTED donation as COMPLETED. Updates lastDonatedAt. If completed count >= unitsNeeded, marks request FULFILLED and cancels remaining PENDING donations. |
+| PATCH | /api/donations/:id/cancel | USER (donor or request owner) | Cancel a PENDING or ACCEPTED donation. If request was MATCHED and accepted+completed count drops below unitsNeeded, reverts request to OPEN. |
+
+### Admin
+
+| Method | Path | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| GET | /api/admin/users | ADMIN | List all users with pagination |
+| PATCH | /api/admin/users/:id/block | ADMIN | Block a user (invalidates sessions) |
+| PATCH | /api/admin/users/:id/unblock | ADMIN | Unblock a user |
+| GET | /api/admin/requests | ADMIN | List all blood requests |
+
+### AI
+
+| Method | Path | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| POST | /api/ai/parse-request | USER | Parse unstructured text into request fields. Rate limit: 10 per 10 minutes per user. |
+
+### Rate limiting
+
+| Limiter | Limit | Key |
+| :--- | :--- | :--- |
+| General | 600 requests per 15 minutes | IP address (skips `/api/ping`) |
+| AI parse | 10 requests per 10 minutes | User ID (falls back to IP for unauthenticated requests) |
+| Better Auth | Built-in (managed by Better Auth library) | Varies by endpoint |
 
 ---
 
-## 9. Security and Validation
+## 7. AI assistant
 
-- Input Validation: Every incoming payload is validated against Zod schemas for body, query parameters, and route parameters.
-- Session-Based Authentication: Managed by Better Auth using secure HTTP-only cookies and cryptographic session verification.
-- Role-Based Access Control: Enforced at router level using `requireRole("ADMIN")`.
-- Privacy Protection: Contact phone numbers are stripped from public feeds and only revealed to verified request owners or accepted donors.
-- Transactional Integrity: All multi-table updates (e.g., blocking a user and deleting sessions, accepting donations, cancelling requests) execute inside database transactions.
-- Rate Limiting: General API requests are throttled at 100 requests per 15-minute window; AI endpoints are throttled at 10 requests per 1-minute window.
+**Endpoint:** `POST /api/ai/parse-request`
+
+**Input:** `{ "text": "..." }` (10-1000 characters)
+
+The service calls an LLM via OpenRouter with a structured system prompt.
+The model returns JSON; the service validates it with Zod.
+Phone numbers are extracted by a separate regex (`/(?:\+8801|01)[3-9]\d{8}/`) in the
+server code, not by the model. The AI never submits a blood request; it only prefills
+the form for the user to review.
+
+**Response shape**
+
+```json
+{
+  "fields": {
+    "patientName": "string | null",
+    "bloodGroup": "A+ | A- | B+ | B- | AB+ | AB- | O+ | O- | null",
+    "unitsNeeded": "1-10 | null",
+    "hospital": "string | null",
+    "district": "string | null",
+    "area": "string | null",
+    "urgency": "NORMAL | URGENT | CRITICAL",
+    "contactPhone": "string | null"
+  },
+  "missingFields": ["array of field names that are null"],
+  "matchingDonorsCount": 0
+}
+```
+
+`matchingDonorsCount` is the number of eligible, available donors that match the extracted
+blood group and district.
+
+**Model:** `<<FILL: production OpenRouter model id>>`
+(The eval script and `.env.example` use `openrouter/free` as a placeholder.)
 
 ---
 
-## 10. Testing
-
-The backend includes test suites covering business logic, compatibility matrices, donor ranking, donation status transitions, AI parsing, and admin moderation.
-
-To run all automated test suites:
-```bash
-npm test
-```
-
-To run tests in watch mode:
-```bash
-npm run test:watch
-```
-
-To execute the AI benchmark evaluation against OpenRouter:
-```bash
-npm run eval:ai
-```
-
----
-
-## 11. Setup Guide
+## 8. Setup
 
 ### Prerequisites
-- Node.js v20 or higher
-- npm v10 or higher
-- PostgreSQL database (e.g., Neon serverless)
 
-### Installation
+- Node.js >= 20
+- PostgreSQL (local or Neon)
+- An OpenRouter API key
+
+### Environment variables
+
+#### Server (`server/.env`)
+
+| Variable | Local example | Production note |
+| :--- | :--- | :--- |
+| `PORT` | `5000` | Set by Render automatically |
+| `NODE_ENV` | `development` | Set to `production` on Render |
+| `DATABASE_URL` | `postgresql://...` | Neon pooled URL |
+| `DIRECT_URL` | `postgresql://...` | Neon direct URL (migrations) |
+| `BETTER_AUTH_SECRET` | (32+ random chars) | Generate with `openssl rand -hex 32` |
+| `BETTER_AUTH_URL` | `http://localhost:5000` | Production: your Render service URL |
+| `FRONTEND_URL` | `http://localhost:3000` | Production: your Vercel URL |
+| `OPENROUTER_API_KEY` | `sk-or-v1-...` | From openrouter.ai |
+| `OPENROUTER_MODEL` | `openrouter/free` | Production: `<<FILL>>` |
+| `OPENROUTER_TIMEOUT_MS` | `30000` | |
+| `ADMIN_EMAIL` | `admin@bloodsync.com` | Seed only |
+| `ADMIN_PASSWORD` | `Admin@123456` | Seed only |
+| `DEMO_PASSWORD` | `Demo@123456` | Seed only |
+
+#### Client (`client/.env.local`)
+
+| Variable | Local example | Production note |
+| :--- | :--- | :--- |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Your Vercel URL |
+| `BACKEND_URL` | `http://localhost:5000` | Your Render URL (server-side only) |
+| `NEXT_PUBLIC_DEMO_LOGIN` | `false` | Set to `true` to show demo buttons |
+| `NEXT_PUBLIC_DEMO_REQUESTER_EMAIL` | `demo.requester1@bloodsync.test` | |
+| `NEXT_PUBLIC_DEMO_DONOR_EMAIL` | `demo.donor1@bloodsync.test` | |
+| `NEXT_PUBLIC_DEMO_PASSWORD` | `Demo@123456` | |
+| `NEXT_PUBLIC_DEMO_ADMIN_EMAIL` | `admin@bloodsync.com` | |
+| `NEXT_PUBLIC_DEMO_ADMIN_PASSWORD` | `Admin@123456` | |
+
+### Running locally
+
+**Server**
+
 ```bash
 cd server
+cp .env.example .env        # fill in your values
 npm install
-```
-
-### Environment Variables
-Configure `server/.env` based on `server/.env.example`:
-
-| Variable | Purpose | Example |
-| :--- | :--- | :--- |
-| `PORT` | HTTP server port | `5000` |
-| `NODE_ENV` | Application environment | `development` |
-| `DATABASE_URL` | Pooled PostgreSQL connection string | `postgresql://user:pass@host/db?sslmode=require` |
-| `DIRECT_URL` | Direct PostgreSQL connection string | `postgresql://user:pass@host/db?sslmode=require` |
-| `BETTER_AUTH_SECRET` | 32-character secret for Better Auth tokens | `super-secret-random-32-char-string` |
-| `BETTER_AUTH_URL` | Base URL of backend server | `http://localhost:5000` |
-| `FRONTEND_URL` | Origin URL for CORS configuration | `http://localhost:3000` |
-| `OPENROUTER_API_KEY` | API key for OpenRouter inference | `sk-or-v1-...` |
-| `OPENROUTER_MODEL` | LLM model identifier | `google/gemini-2.5-flash` |
-| `OPENROUTER_TIMEOUT_MS` | AI inference timeout in milliseconds | `30000` |
-| `ADMIN_EMAIL` | Default administrator account email | `admin@bloodsync.com` |
-| `ADMIN_PASSWORD` | Default administrator account password | `Admin@123456` |
-| `DEMO_PASSWORD` | Shared password for seeded demo users | `Demo@123456` |
-
-### Database Migration & Seeding
-Apply migrations:
-```bash
-npx prisma migrate dev
-```
-
-Seed initial administrative user:
-```bash
-npm run seed
-```
-
-Seed realistic demo dataset (20 donors, 2 requesters, 4 requests across all statuses):
-```bash
-npm run seed:demo
-```
-
-### Running the Server
-Development mode:
-```bash
+npm run db:deploy           # run migrations
+npm run seed                # create admin account
+npm run seed:demo           # optional: create demo accounts
 npm run dev
 ```
 
-Production build and execution:
+**Client**
+
 ```bash
-npm run build
-npm start
+cd client
+cp .env.example .env.local  # fill in your values
+npm install
+npm run dev
 ```
 
 ---
 
-## 12. Demo Credentials
+## 9. Deployment
 
-### Administrator Account
-- Email: `admin@bloodsync.com`
-- Password: `Admin@123456`
-- Role: `ADMIN`
+See [server/DEPLOYMENT.md](server/DEPLOYMENT.md) for the full step-by-step guide including:
 
-### Demo Requesters
-- Requester 1: `demo.requester1@bloodsync.test` / `Demo@123456` (Has OPEN and MATCHED requests)
-- Requester 2: `demo.requester2@bloodsync.test` / `Demo@123456` (Has FULFILLED and EXPIRED requests)
+- Render build command (`npm ci && npm run build`) and start command (`node dist/server.js`)
+- Vercel environment variable table
+- Running migrations and seeds against Neon using Windows PowerShell syntax
+- Clearing environment variables after seeding (`Remove-Item Env:NAME`)
 
-### Demo Donors
-Password for all demo donors: `Demo@123456`
+**Summary**
 
-- `demo.donor1@bloodsync.test`: O+, Dhaka, Available, Eligible (Matched on Request 2)
-- `demo.donor2@bloodsync.test`: A+, Chittagong, Available, Eligible (Completed on Request 3)
-- `demo.donor3@bloodsync.test`: B+, Rajshahi, Available, Eligible
-- `demo.donor4@bloodsync.test`: AB+, Mymensingh, Available, Eligible
-- `demo.donor5@bloodsync.test`: O-, Khulna, Available, Eligible
-- `demo.donor6@bloodsync.test`: A-, Barisal, Available, Eligible
-- `demo.donor7@bloodsync.test`: B-, Dhaka, Available, Eligible
-- `demo.donor8@bloodsync.test`: AB-, Rangpur, Available, Eligible
-- `demo.donor9@bloodsync.test` through `demo.donor12@bloodsync.test`: Various blood groups, Available, Eligible
-- `demo.donor13@bloodsync.test`, `demo.donor14@bloodsync.test`: Available, Eligible (> 90 days since donation)
-- `demo.donor15@bloodsync.test` through `demo.donor17@bloodsync.test`: Available, Ineligible (< 90 days recovery period)
-- `demo.donor18@bloodsync.test` through `demo.donor20@bloodsync.test`: Unavailable (`isAvailable: false`)
+| Service | Platform | Plan |
+| :--- | :--- | :--- |
+| Database | Neon | Free tier |
+| Backend | Render | Free Node web service |
+| Frontend | Vercel | Hobby |
+
+Render free instances spin down after inactivity. Set up an uptime monitor to ping
+`<<FILL: Render URL>>/api/ping` every 5 minutes to keep the instance warm.
+`/api/ping` has no database query and no logging, so it does not count toward rate limits.
 
 ---
 
-## 13. Known Limitations and Future Improvements
+## 10. Security
 
-- Geolocation Precision: Donor ranking relies on district and area string matching. Distance calculation does not currently use latitude and longitude coordinates or route-distance mapping.
-- Notification Dispatch: Blood requests do not yet trigger direct SMS or push notifications; notifications are currently tracked via database status polling.
-- Rate Limiting Storage: Rate limiting utilizes in-memory tracking, which resets on server restart and is not distributed across multiple server instances.
-- Email Verification: Email verification tokens are generated but not dispatched via external SMTP in local development.
+- **Role protection:** `role` and `isBlocked` fields have `input: false` in Better Auth config.
+  Clients cannot set them at signup or through any user-facing endpoint.
+- **Session invalidation:** When an admin blocks a user, Better Auth invalidates all active sessions.
+- **Admin route guard:** All `/api/admin/*` routes require `role === ADMIN` checked server-side.
+- **Open redirect protection:** The `?next` query parameter on `/login` is validated against an
+  allowlist of same-origin paths before redirect.
+- **Input validation:** All request bodies and query strings are validated with Zod before
+  reaching service or database layer.
+- **HTTP security headers:** Helmet sets standard headers on the backend. Next.js config adds
+  `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`, and `Permissions-Policy`
+  on the frontend.
+- **Secure cookies:** `useSecureCookies: true` and `secure: true` cookie attributes are set
+  when `NODE_ENV=production`. SameSite defaults to `Lax` (safe for the Vercel -> Render proxy).
+- **Trust proxy:** `app.set("trust proxy", 1)` is set in production so Express reads the real
+  client IP from the `X-Forwarded-For` header added by Vercel.
+- **Privacy:** Donor search (`GET /api/donors/search`) never returns phone or email.
+  `GET /api/requests/:id` returns `contactPhone` only to the request owner, admins, and
+  donors whose donation status is ACCEPTED or COMPLETED.
+  `GET /api/requests/:id/donors` (ranked list) and `GET /api/requests/:id/donations`
+  (volunteer list) return donor phones only to the request owner or an admin.
 
 ---
 
-## 14. Client
+## 11. Known limitations
 
-Placeholder for frontend web application documentation. The client application will be developed using Next.js / Vite in the `client/` directory and will interface with the backend endpoints documented above.
+- No email verification flow. The `emailVerified` field exists in the schema (created by
+  Better Auth) but no verification tokens are generated or sent. Users can sign in
+  immediately after registration.
+- No password reset flow.
+- No push or email notifications. Donors are not alerted when accepted.
+- No real-time updates. The feed and request detail pages require a manual refresh or
+  navigating away and back to show changes made by other users.
+- Donor search returns only available and eligible donors. A donor who donated recently
+  or set themselves unavailable does not appear even if they would otherwise match.
+- The general rate limiter is keyed by IP. Behind Vercel's proxy all users share a small
+  set of egress IPs, which is why the limit is set to 600 requests per 15 minutes.
+- Render free tier spins down after inactivity (approximately 15 minutes). Cold starts
+  add 10-30 seconds of latency on the first request.
+- No integration tests. All server tests are unit tests with mocked Prisma or pure functions.
+  The frontend has no automated tests.
+- No file upload or image support.
+- No internationalisation. The UI is in English; the AI prompt handles Bangla and mixed input.
+- Blood request area and hospital fields are free text; there is no canonical list.
+
+---
+
+## 12. AI evaluation
+
+Evaluated on 20 hand-written samples covering English, Bangla, and mixed input with phone numbers.
+Samples are in `server/src/tests/ai-eval/samples.json`.
+The evaluation script is `server/src/scripts/evaluate-ai.ts`.
+
+Model tested: `<<FILL: production model id>>`
+Run date: `<<FILL: YYYY-MM-DD>>`
+
+| Metric | Value |
+| :--- | :--- |
+| Total samples | 20 |
+| Fully correct samples | `<<FILL>>` |
+| Overall field accuracy | `<<FILL>>` |
+| Blood group accuracy | `<<FILL>>` |
+| District accuracy | `<<FILL>>` |
+| Urgency accuracy | `<<FILL>>` |
+| Average response time | `<<FILL>> ms` |
+
+The full report (auto-generated by the eval script) is in `docs/ai-evaluation.md`.
+
+---
+
+## 13. Performance
+
+Lighthouse scores (measured on the production Vercel deployment):
+
+| Page | Performance | Accessibility | Best Practices | SEO |
+| :--- | :--- | :--- | :--- | :--- |
+| Landing (`/`) | `<<FILL>>` | `<<FILL>>` | `<<FILL>>` | `<<FILL>>` |
+| Request feed (`/requests`) | `<<FILL>>` | `<<FILL>>` | `<<FILL>>` | `<<FILL>>` |
+| New request (`/requests/new`) | `<<FILL>>` | `<<FILL>>` | `<<FILL>>` | `<<FILL>>` |
+
+---
+
+## 14. Screenshots
+
+`<<FILL: replace with actual screenshot images>>`
+
+| Screen | Preview |
+| :--- | :--- |
+| Landing page | `<<FILL>>` |
+| Request feed | `<<FILL>>` |
+| Request detail with ranked donors | `<<FILL>>` |
+| Admin user management | `<<FILL>>` |
+
+---
+
+## 15. Demo accounts
+
+All demo accounts use the password set in `DEMO_PASSWORD` (default: `Demo@123456`).
+The admin password is set in `ADMIN_PASSWORD` (default: `Admin@123456`).
+
+**Admin**
+
+| Email | Password |
+| :--- | :--- |
+| admin@bloodsync.com | Admin@123456 (from ADMIN_PASSWORD seed var) |
+
+**Requesters**
+
+| Email | Password |
+| :--- | :--- |
+| demo.requester1@bloodsync.test | Demo@123456 |
+| demo.requester2@bloodsync.test | Demo@123456 |
+
+**Donors (from `server/prisma/seed-demo.ts`)**
+
+Donors 1-12: eligible (never donated), available.
+Donors 13-14: eligible (donated >90 days ago), available.
+Donors 15-17: ineligible (<90 days since last donation), available (will not appear in search).
+Donors 18-20: unavailable (isAvailable: false).
+
+| # | Email | Blood group | District | Eligible | Available |
+| :- | :--- | :--- | :--- | :--- | :--- |
+| 1 | demo.donor1@bloodsync.test | O+ | Dhaka | yes | yes |
+| 2 | demo.donor2@bloodsync.test | A+ | Chittagong | yes | yes |
+| 3 | demo.donor3@bloodsync.test | B+ | Rajshahi | yes | yes |
+| 4 | demo.donor4@bloodsync.test | AB+ | Mymensingh | yes | yes |
+| 5 | demo.donor5@bloodsync.test | O- | Khulna | yes | yes |
+| 6 | demo.donor6@bloodsync.test | A- | Barisal | yes | yes |
+| 7 | demo.donor7@bloodsync.test | B- | Dhaka | yes | yes |
+| 8 | demo.donor8@bloodsync.test | AB- | Rangpur | yes | yes |
+| 9 | demo.donor9@bloodsync.test | O+ | Sylhet | yes | yes |
+| 10 | demo.donor10@bloodsync.test | A+ | Comilla | yes | yes |
+| 11 | demo.donor11@bloodsync.test | B+ | Gazipur | yes | yes |
+| 12 | demo.donor12@bloodsync.test | AB+ | Dhaka | yes | yes |
+| 13 | demo.donor13@bloodsync.test | O+ | Chittagong | yes (120 d) | yes |
+| 14 | demo.donor14@bloodsync.test | B+ | Rajshahi | yes (105 d) | yes |
+| 15 | demo.donor15@bloodsync.test | A+ | Sylhet | no (30 d) | yes |
+| 16 | demo.donor16@bloodsync.test | B+ | Khulna | no (45 d) | yes |
+| 17 | demo.donor17@bloodsync.test | O- | Barisal | no (60 d) | yes |
+| 18 | demo.donor18@bloodsync.test | A- | Rangpur | yes | no |
+| 19 | demo.donor19@bloodsync.test | AB+ | Comilla | yes | no |
+| 20 | demo.donor20@bloodsync.test | B- | Gazipur | yes | no |
+
+---
+
+## Tests
+
+Server: 7 test suites, 120 tests, all unit tests (mocked Prisma or pure functions). No integration tests.
+Frontend: no automated tests.
+
+Run server tests:
+
+```bash
+cd server && npm test
+```
+
+**Test files**
+
+| File | Tests | What it covers |
+| :--- | :--- | :--- |
+| eligibility.test.ts | 6 | 90-day recovery period logic |
+| bloodCompatibility.test.ts | 75 | Donor-to-patient compatibility matrix |
+| donorRanking.test.ts | 5 | Donor scoring and ranking |
+| donationStatus.test.ts | 5 | Donation status transition guards |
+| admin.test.ts | 16 | Admin service: block/unblock, list users |
+| ai.test.ts | 9 | AI service: phone extraction, district normalization, blood group normalization |
+| ping.test.ts | 4 | GET /api/ping: status, body, no auth required, no DB |
+
+---
+
+## Request status diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> OPEN : create request
+    OPEN --> MATCHED : accepted+completed donations >= unitsNeeded
+    MATCHED --> OPEN : accepted donation cancelled and count falls below unitsNeeded
+    OPEN --> CANCELLED : owner cancels (also cancels PENDING and ACCEPTED donations)
+    MATCHED --> CANCELLED : owner cancels (also cancels PENDING and ACCEPTED donations)
+    MATCHED --> FULFILLED : completed donations >= unitsNeeded
+    OPEN --> EXPIRED : neededBy date has passed
+    MATCHED --> EXPIRED : neededBy date has passed
+```
+
+## Donation status diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING : donor volunteers
+    PENDING --> ACCEPTED : request owner accepts
+    ACCEPTED --> COMPLETED : request owner marks completed (updates donor lastDonatedAt)
+    PENDING --> CANCELLED : donor withdraws OR owner cancels OR request cancelled OR request fulfilled
+    ACCEPTED --> CANCELLED : donor withdraws OR owner cancels OR request cancelled
+```
